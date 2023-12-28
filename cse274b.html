@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>CSE 274 Progress</title>
+        <link rel="icon" type="image/png" href="favicon.ico">
+        <link rel="stylesheet" type="text/css" href="style-simple.css">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body>
+        <h1>CSE 274 Project Progress 2</h1>
+        <p>
+            For background, I decided to implement 
+            <a href="https://cseweb.ucsd.edu//~viscomp/classes/cse274/fa21/papers/a40-moon.pdf">Adaptive Polynomial Rendering</a>
+            by B. Moon, S. McDonagh, K. Mitchell and M. Gross in Mitsuba 2. Before, I was able to adapt 2D third-order polynomials to blocks
+            of an image, but there were a few lingering issues. 
+        </p> 
+        <p>
+            So far, I've:
+        </p>
+        <ul>
+            <li>
+                Fixed the issue where the approximation doesn't fit near the light by adding an AOV channel that is simply 1 when the surface 
+                is emission and 0 otherwise. 
+            </li>
+            <li>
+                Made boundaries between patches smoother by overlapping them a little bit.
+            </li>
+            <li>Improved the approximation by trying out polynomials of different orders and calculating the estimated error for each.</li>
+        </ul>
+        <div class="center">
+            <img class="fit" src="media/cse274/output3.png"><br>
+            <i>Cornell box at 8 spp, polynomial fitted with 29 × 29 blocks, 14 × 14 stride</i>
+        </div><br>
+        <div class="center">
+            <img class="fit" src="media/cse274/output4.png"><br>
+            <i>Cornell box at 8 spp, no fitting</i>
+        </div>
+        <p>
+            It looks a lot better, now all that remains is to just adaptively sample based off error and repeat the reconstruction. 
+            I've been meaning to check in with Alex that everything I've done so far is correct; I'll go to office hours soon as well.
+            One quick thing to note is that I'm using the identity matrix for the weighting operator <i>W</i> but I'll switch to a gaussian
+            so the blocks aren't as visible. I'll also build some more plugins for Mitsuba so I can render more scenes besides just the cornell box.
+        </p>
+        <p>Here's what the fit using different fixed-order polynomials looks like (everything else the same as the above):</p>
+        <div class="center">
+            <img class="fit" src="media/cse274/output_p0.png"><br>
+            <i>0th-order polynomials</i>
+        </div><br>
+        <div class="center">
+            <img class="fit" src="media/cse274/output_p1.png"><br>
+            <i>1st-order polynomials</i>
+        </div><br>
+        <div class="center">
+            <img class="fit" src="media/cse274/output_p2.png"><br>
+            <i>2nd-order polynomials</i>
+        </div><br>
+        <div class="center">
+            <img class="fit" src="media/cse274/output_p3.png"><br>
+            <i>3rd-order polynomials</i>
+        </div>
+        <p>
+            Before: <a href="cse274a.html">proposal write-up</a>
+        </p>
+    </body>
+</html>

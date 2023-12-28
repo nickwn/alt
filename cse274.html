@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>CSE 274 Final</title>
+        <link rel="icon" type="image/png" href="favicon.ico">
+        <link rel="stylesheet" type="text/css" href="styles/code-style.min.css">
+        <link rel="stylesheet" type="text/css" href="style-simple.css">
+        <script src="highlight.min.js"></script>
+        <script>hljs.highlightAll();</script>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body>
+        <h1>CSE 274 Final Report</h1>
+        <p>
+            For my project, I decided to implement 
+            <a href="https://cseweb.ucsd.edu//~viscomp/classes/cse274/fa21/papers/a40-moon.pdf">Adaptive Polynomial Rendering</a>
+            by B. Moon, S. McDonagh, K. Mitchell and M. Gross. The general idea of the paper is to fit 2D polynomials to blocks of the image, 
+            then estimate the error of the reconstruction and adaptively sample more at areas of high error. 
+        </p> 
+        <p>
+            I decided to implement the paper using <a href="https://www.mitsuba-renderer.org/">Mitsuba 2</a> with its Python bindings.
+            Most of the math was done using numpy on the CPU, and Mitsuba made the actual rendering very easy:
+        </p>
+<pre><code class="language-python">pos = ek.arange(UInt32, total_sample_count)
+pos //= spp
+scale = Vector2f(1.0 / film_size[0], 1.0 / film_size[1])
+pos = Vector2f(Float(pos  % int(film_size[0])),
+            Float(pos // int(film_size[0])))
+pos += sampler.next_2d()
+
+rays, weights = sensor.sample_ray_differential(
+    time=0,
+    sample1=sampler.next_1d(),
+    sample2=pos * scale,
+    sample3=0
+)
+spec, mask, aovs = integrator.sample(scene, sampler, rays)
+</code></pre>
+        <p>
+            I initially started by splitting the image into blocks and fitting simple third order polynomials to the blocks. It took
+            a bit of legwork in python to format the aovs and polynomial terms into the proper design matrix, but once I did the result
+            looked like this:
+        </p><br>
+        <div class="center">
+            <img src="media/cse274/output2.png"><br>
+            <i>cbox @ 1spp, 232 × 232, polynomial fitted, 29 × 29 block size</i>
+        </div>
+        <p>
+            I noticed that the polynomials didn't fit very well to the edge of the light, where the feature vector (surface normals, depth)
+            was essentially the same. All the fit could rely on was the highest term in the low-order polynomial, so the the edge ended being
+            a little smoothed. I ended up fixing this by adding a new AOV that was 1.0 when the surface was emission and 0 otherwise. Unfortunately,
+            the only way I could do this in Mitsuba was by re-tracing the rays into the scene.
+        </p>
+<pre><code class="language-python">surface_interaction = scene.ray_intersect(rays)
+
+emitter_mask = ek.neq(
+    surface_interaction.emitter(scene), UInt64(0)
+)
+emitter_aov = ek.select(emitter_mask, Float(1), Float(0))
+aovs.insert(0, emitter_aov)
+</code></pre>
+
+        <p>
+            With this and some block overlapping, the image started to look a lot better:
+        </p><br>
+        <div class="center">
+            <img class="fit" src="media/cse274/output_p3.png"><br>
+            <i>Cornell box at 8 spp, polynomial fitted with 29 × 29 blocks, 14 × 14 stride</i>
+        </div>
+        <p>
+            The next step was to find the optimal order polynomial to use for fitting. The algorithm tries orders from 0 to 3, 
+            then determines the error of each by computing the bias squared plus variance squared. Here's what the fits look like on an 
+            inset of the original image:
+        </p><br>
+        <div class="center">
+            <img src="media/cse274/inset/output_p0.png">
+            <img src="media/cse274/inset/output_p1.png"><br>
+            <i>0th order, 1st order</i>
+        </div><br>
+        <div class="center">
+            <img class="fit" src="media/cse274/inset/output_p2.png">
+            <img class="fit" src="media/cse274/inset/output_p3.png"><br>
+            <i>2nd order, 3rd order</i>
+        </div>
+        <p>
+            The lower order polynomials tend to underfit and look a little flat, while the higher order polynomials tend to overfit and look a 
+            little wavy. Here's what the code estimating the error for each block and each polynomial order looks like:
+        </p>
+<pre><code class="language-python"># build design matrix
+Xk = np.hstack((Xk_ones, Xk_feature, Xk_polynomial))
+
+# normal equation
+H = Xk * np.linalg.pinv(Xk.T * W * Xk) * Xk.T * W
+
+# compute bias^2
+bias2 = np.square((H * prev_y_hat) - prev_y_hat)
+
+# compute var
+var_t_prev = np.square(prev_H_opt * y_std_dev)
+var_t = np.square(H) * var_t_prev
+estimate_werr = W * (bias2 + estimate_var)
+</code></pre>
+        <p>
+            Here's what order each pixel is choosing (brigher is higher):
+        </p><br>
+        <div class="center">
+            <img class="fit" src="media/cse274/orders1.png"><br>
+            <i>Each pixel's color is calculated by the floor of the average of the chosen orders for each overlapping block</i>
+        </div>
+        <p>
+            Here's what the final reconstruction looks like:
+        </p><br>
+        <div class="center">
+            <img class="fit" src="media/cse274/output5.png"><br>
+            <i>Cornell box at 8 spp, polynomial fitted with 29 × 29 blocks, 14 × 14 stride</i>
+        </div>
+        <p>
+            The reconstruction could be improved a little bit in front of the small box, but otherwise it's looking better. The remainder could be fixed
+            by resampling the image. To do this, I calculated the estimated error reduction at each pixel using the estimated error, 
+            then resampled spp * width * height samples for the next iteration. The cornell box is already a pretty simple scene, so there's not much 
+            improvement except for the front of the small box.
+        </p>
+        <p>
+            One thing to note is that (with Alex's sugggestion) I accumulated the AOV textures so that I'm not solving larger and larger matrix 
+            equations as more samples come in. Variance accumulation from the new samples is done using 
+            <a href="http://cpsc.yale.edu/sites/default/files/files/tr222.pdf">Chan et al.'s generalization</a> of 
+            <a href="https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Welford's_online_algorithm">Welford's online algorithm.</a>
+        </p><br>
+        <div class="center">
+            <img class="fit" src="media/cse274/output6.png"><br>
+            <i>5 iterations at 8 spp or equivalent</i>
+        </div>
+        <p>
+            I then moved onto other scenes, starting with the stairs. One thing I noticed when I rendered this was that I didn't have a texture color
+            AOV, so fine details in the wall texture and floor ended up being smoothed out. However, the complexity of this scene makes it easier to 
+            see how the polynomial reconstruction improves across iterations:
+        </p><br>
+        <div class="center">
+            <img class="fit" src="media/cse274/stairs/output1.png"><br>
+            <i>Stairs, first iteration</i>
+        </div><br>
+        <div class="center">
+            <img class="fit" src="media/cse274/stairs/output2.png"><br>
+            <i>Stairs, five iterations</i>
+        </div>
+        <p>
+            The area under the stairs starts off a little wavy but improves after. However, I still needed a way to add texture color AOVs. 
+            For reference, here's what the stairs look like without fitting:
+        </p><br>
+        <div class="center">
+            <img class="fit" src="media/cse274/stairs/output3.png"><br>
+            <i>Stairs, five iterations, no fitting</i>
+        </div>
+        <p>
+            To get texture AOVs, I decided to calculate the bsdf from the surface interactions I computed earlier for the emission AOV:
+        </p>
+<pre><code class="language-python">surface_interaction = scene.ray_intersect(rays)
+
+ctx = BSDFContext()
+active = surface_interaction.is_valid()
+bsdf = surface_interaction.bsdf()
+normal = Vector3f(0, 0, 1)
+bsdf_evals = BSDF.eval_vec(
+    bsdf, 
+    ctx, 
+    surface_interaction, 
+    normal, 
+    active
+)
+</code></pre>
+        <p>
+            Evaluating the BSDF at the normal isn't exactly the same as getting the texture color, but it was the best I could figure out with 
+            Mitsuba's sparsely documented API. The resulting AOV looks like:
+        </p><br>
+        <div class="center">
+            <img class="fit" src="media/cse274/stairs/output5.png">
+        </div>
+        <p>
+            The specular highlights on the stairs aren't accurate, but luckily they are smooth enough to be undone by a low-order polynomial.
+            The final image looks like:
+        </p><br>
+        <div class="center">
+            <img class="fit" src="media/cse274/stairs/output4.png"><br>
+            <i>Final reconstruction</i>
+        </div><br>
+        <div class="center">
+            <img class="fit" src="media/cse274/orders2.png"><br>
+            <i>Polynomial orders chosen</i>
+        </div>
+        <p>
+            It looks a lot better, but there's some over-correction for the specular higlights on the table causing some dark-looking blocks, and
+            unfortunately I was unable to addresss this. Here's what the dragon looks like:
+        </p><br>
+        <div class="center">
+            <img class="fit" src="media/cse274/dragon/output2.png"><br>
+            <i>Dragon, 5 iterations</i>
+        </div>
+        <p>
+            Refractions and other sharp details also tend to be smoothed out, as seen in this water glass render. These are harder to 
+            de-noise since there is no underlying texture color AOV that can be relied on.
+        </p><br>
+        <div class="center">
+            <img class="fit" src="media/cse274/glass/output1.png"><br>
+            <i>Water glass, two iterations, fitted</i>
+        </div><br>
+        <div class="center">
+            <img class="fit" src="media/cse274/glass/output2.png"><br>
+            <i>Water glass, two iterations, unfitted</i>
+        </div><br>
+        <p>
+            One interesting interpretation of the polynomial fitting method is as a modified 
+            <a href="https://en.wikipedia.org/wiki/Savitzky%E2%80%93Golay_filter">Savitzky-Golay filter</a>.
+        </p><br>
+        <div class="center">
+            <img class="fit" src="media/cse274/savgol.jfif"><br>
+            <i>Image from <a href="https://twitter.com/anorangeduck/status/1451616693315375123">Daniel Holden</a></i>
+        </div><br>
+        <p>
+            Multiplying a hat matrix (generated by the normal equation) with a block of the image can be 
+            thought of as applying a series of filters to each pixel in the block, with each row of the hat matrix acting as a kernel
+            for the row's respective pixel.
+        </p><br>
+        <div class="center">
+            <img class="fit" src="media/cse274/filters.png"><br>
+            <i>Here's what the kernels for the center pixel of two blocks in this image look like (apologies for the low-quality image)</i>
+        </div><br>
+        <p>
+            The kernels look similar to bilateral kernels, which lines up since Savitzky-Golay is edge-preserving. Overall, this method does a great
+            job producing smooth results on mainly diffuse scenes with a relatively low number of samples. However, I think this method's
+            inability to handle specular reflections makes it unsuitable for many production cases. Maybe a quick fix would be to split the image into diffuse
+            and specular reflections like Pixar's later learning-based method does, but unfortunately I didn't have time to implement this.
+        </p>
+        <p>
+            Before: <a href="cse274b.html">halfway write-up</a>
+        </p>
+    </body>
+</html>

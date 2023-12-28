@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>CSE 168 Proposal</title>
+        <link rel="icon" type="image/png" href="favicon.ico">
+        <link rel="stylesheet" type="text/css" href="style-simple.css">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body>
+        <h1>CSE 168 Final Project</h1>
+        <p>
+            (I'll fix links later) <br>
+            For my final project, I plan to implement a highly realistic, but reasonably fast, hair renderer. For any implementation decisions, I've decided to prioritize realism over speed. <br>
+            <br>
+            For this project I hope to implement Steve Marschner's elliptical hair model, the most realistic hair model I have found for simulating the scattering effects of hair strands: <br>
+            https://www.cs.cornell.edu/~pramook/papers/elliptical-hair.pdf <br>
+            It builds on previous work by simulating not just the R, TT, and TRT reflective lobes of hair strands, but also the hair "glints" caused by the ellipical shape of most hair strands.
+            However, if I find this model is too difficult to implement, I'll stick to just using Marschner's previous, simpler hair model.
+            <br><br>
+            If i have time, I also hope to implement the multiple scattering effects in hair (hopefully for some of that sweet, sweet extra credit). Unlike other materials, 
+            simulating the multiple scattering effects of light on hair is unreasonable due to the high number of bounces a light path has when traveling through hair. 
+            This has been popularly solved in real time rendering with tricks like deep opacity maps. However, to stick to the realistic goals of this implementation, 
+            I'll simulate the hair as a volume, like what is presented by pixar in this old paper (extrapolating the density of each cell using nearby guide hairs): <br>
+            https://graphics.pixar.com/library/Hair/paper.pdf <br>
+            or Unreal Engine currently on higher-end systems: <br>
+            https://docs.unrealengine.com/en-US/Engine/HairRendering/Overview/index.html <br>
+            <br>
+            To read in hair data, I decided to import data from the alembic file format. There is no open-standard file format that supports storing hair strands,
+            but there is a bit of precedent in using the alembic file format, as maya allows exporting hair strands to it and Unreal Engine uses it for importing strand-based "grooms". 
+            To support using the alembic file format, I added a new "hair" command to the .test file format used in this class. The format is like so:
+            <br>
+            hair &lt;filename.abc&gt; &lt;hair group&gt;
+            <br>
+            Where filename.abc is the name of the alembic file in the same directory as the .test file and the hair group is the name of the group containing all hair strands in the alembic file. 
+            Maya exports the strands as b-splines, so I stuck to using those when rendering.
+            <br>
+            To test this, I used my masterful hair modelling skills to create a simple groom in Maya. I couldn't find any nicer xgen hair models online, but I'll keep trying. 
+            I intentionally kept the strand count low to start things off simple.
+            <br>
+            <img width=100% src="media/cse168/hair1.png" width=700>
+            <br>
+            To check my importer I then rendered a simple scene with my hair, using a blonde diffuse material and slight ambient light.
+            <br>
+            <img width=100% src="media/cse168/hair2.png" width=700>
+        </p>
+    </body>
+</html>

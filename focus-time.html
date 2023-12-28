@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<!-- yes just html/css, not serial killer yet -->
+<html>
+    <head>
+        <title>Nick Nebel</title>
+        <link rel="icon" type="image/png" href="favicon.ico">
+        <link rel="stylesheet" type="text/css" href="style.css">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body>
+        <div class="nav-bar">
+            <h1><a href="index.html">nick nebel</a></h1>
+            <div class="links">
+                <a href="https://nickwn.github.io/resume.pdf">résumé</a> 
+                <a href="https://github.com/nickwn">github</a>
+            </div>
+        </div>
+        <div class="content">
+            <h1>Focus Time Case Study</h1>
+            <i>Team Members: Jack Yang, Michele Murakami</i> <br><br>
+            
+            <h3>Project Overview</h3> <br>
+            <p>As a part of UCSD’s Interaction Design course, I worked with a team of two other students to research and develop a mobile app to motivate users to be more productive. Our final app, called Focus Time, allowed users to create “focus sessions” with a consequence and reward for finishing or failing to finish their task. I was primarily responsible for implementing the base design of many components of the website in HTML/CSS/JS and designing the calendar view of the website.</p><br>
+            <div class="center" style="max-width: 700px;">
+                <img width=200 src="media/focus-time/overview1.png">
+                <img width=200 src="media/focus-time/overview2.png">
+                <img width=200 src="media/focus-time/overview3.png">
+                <br>
+                <i>A screenshot of the focus sessions page, calendar page, and focus session info page</i>
+            </div>
+            <br><br>
+            
+            <h3>Problem Statement</h3>
+            <p>
+                As a group of university students, we had all experienced the ways in which distractions could prevent us from doing important classwork. Having an effective method to focus isn’t just important for completing schoolwork, but also for many other aspects of life. Learning a new skill, finishing a book, or doing chores all require time and dedication. <br>
+                Many students use time management software like Google Calendar to set aside time to study for classes. Unfortunately, even with the time put down, it can be hard for students to stay motivated to do their work. <br>
+                The question is this: once time is set aside, how can students be motivated to complete their work?
+            </p>
+            
+            <h3>Research</h3>
+            <p>In researching the problem, we found several inspirations that we felt had ideas that could be useful in solving the issue.</p>
+            <div class="center">
+                <img width=100% src="media/focus-time/research1.png"><br>
+                <i>A list of existing applications/tv shows/feelings that we found useful</i>
+            </div>
+            <p>Using these inspirations, we came up with a grid of features to compare them against each other (will replace with html table):</p>
+            <div class="center">
+                <img width=100% src="media/focus-time/research2.png"><br>
+            </div>
+            
+            <h3>Storyboards</h3>
+            <p>To better understand the plight of our potential user base and demonstrate it in a visual form, we came up with a few storyboards to depict a few specific yet theoretical users before and after using our app. Here’s the one I drew:</p>
+            <div class="center">
+                <img width=100% src="media/focus-time/storyboard1.png"><br>
+                <i>My storyboard shows a potential user with a lack of proper motivation affected positively by our app</i>
+            </div>
+            <br>
+            <div class="center" style="width: 100%;">
+                <img width=300 src="media/focus-time/storyboard2.png">
+                <img width=300 src="media/focus-time/storyboard3.png"><br>
+                </h1>
+                <i>My teammates’ storyboards show other situations involving common problems, such as procrastination and habitual distraction</i>
+            </div>
+            <h3>Design Iteration 1: Paper Prototypes</h3>
+            <p>To get a rough idea of what our app should look like, we started with paper prototypes and progressively iterated over our design towards a fully coded real website.</p>
+            <div class="center" style="width: 100%;">
+                <img width=100% src="media/focus-time/di11.png">
+                <img width=100% src="media/focus-time/di12.png">
+            </div>
+            <p>To test this paper prototype, our team conducted a number of qualitative heuristic design evaluations, based on Neilson’s ten design heuristics. After these evaluations, we decided to improve our app in the following ways:</p>
+            <ul>
+                <li>Add an about screen to explain to newcomers how the app works</li>
+                <li>Make the functions of input fields more clear. For example, we would have hint text saying “ reward here”, etc</li>
+                <li>Use apple’s ui for time selection to make selecting a time more intuitive</li>
+                <li>Make it clearer to user you can tap on menu by juggling menu focuses</li>
+                <li>Add a way to delete events once they are created to fix mistakenly created events</li>
+                <li>Add buttons like a calendar button for easier and quicker navigation</li>
+            </ul>
+
+            <h3>Design Iteration 2: Figma</h3>
+            <p>We took in these improvements when creating an outline of our app on Figma:</p>
+            <div class="center" style="width: 100%;">
+                <img width=100% src="media/focus-time/di21.png">
+                <img width=100% src="media/focus-time/di22.png"><br>
+            </div>
+
+            <h3>Design Iteration 3: Web Prototype</h3>
+            <p>We then translated these designs into a website using basic html/css, and eventually added a backend and improved the frontend using handlebars. We initially used a grey color scheme because we had not finalized the look of the app.</p>
+            <div class="center">
+                <img width=100% src="media/focus-time/di31.png">
+            </div>
+            <p>To test our app, we had some potential users run through a few basic activities in our app and recorded any potential points for improvement.</p>
+            <ul>
+                <li>User #1’s main struggle was the calendar. The dots under each date were supposed to represent whether the event on that day was completed, failed, or pending, but she was confused by what they meant.</li>
+                <li>User #2’s main struggle was deciding on a consequence and reward.</li>
+                <li>User #3 struggled with some of the design decisions in our app, for example the chevron made it seem like the user was supposed to swipe instead of tap.</li>
+            </ul>
+            <div class="center" style="width: 100%;">
+                <img src="media/focus-time/di32.png"><br>
+                <i>One of the users had trouble determining the meaning of the dots under each date</i>
+            </div>
+            <p>To address these concerns, we decided to modify our app in the following ways:</p>
+            <ul>
+                <li>Make design of app more clear and engaging</li>
+                <ul>
+                    <li>Make key for calendar, so user is aware of what the colored dots mean</li>
+                    <li>Give suggestions for rewards, consequences, maybe have an example of an event already filled in</li>
+                </ul>
+                <li>If possible, allow user to view event when tapping on calendar</li>
+                <li>Add edit button, so user can edit already created sessions</li>
+            </ul>
+
+            <h3>Final Design</h3>
+            <p>After several rounds of user testing, our team was finally able to complete the app. To present our project, we created a video demonstration here:</p>
+            <iframe width=100% height=300px src="https://www.youtube.com/embed/eCnLlor5VKw" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            <p>While creating this project, I learned a lot about the design and web implementation process. This was my first time using design tools like Figma and web frameworks like handlebars.js. In previous projets, I had always just gone straight to the coding phase and never took the time to think hard about how to best implement every feature. Low-fidelity and high-fidelity mockups were a huge help before going into the implementation phase</p>
+        </div>
+    </body>
+</html>

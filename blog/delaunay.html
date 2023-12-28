@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Delaunay Triangulation</title>
+        <link rel="icon" type="image/png" href="favicon.ico">
+        <link rel="stylesheet" type="text/css" href="styles/code-style.min.css">
+        <link rel="stylesheet" type="text/css" href="style-simple.css">
+        <script src="highlight.min.js"></script>
+        <script>hljs.highlightAll();</script>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body>
+        <h1>Coordinate-Free Delaunay Triangulation</h1>
+        <p>
+            In the last post of this multi-part series, I introduced the concept of intrinsic geometry processing and mentioned a few of its benefits.
+            I wanted to start with a simple example to get readers comfortable with a coordinate-free perspective on geometry processing algorithms,
+            but in this article we'll dive deeper and really start to reap some of the benefits.
+        </p>
+        <p>
+            In this post I formulate a coordinate-free 
+            <a href="https://en.wikipedia.org/wiki/Delaunay_triangulation">Delaunay triangulation</a> 
+            algorithm, starting from a set of points and their
+            <a href="https://en.wikipedia.org/wiki/Euclidean_distance_matrix">Euclidean distance matrix</a> (EDM).
+            The algorithm actually only uses a subset of the distances in the EDM, so this requirement can be relaxed &mdash; but more on this later.
+        </p>
+        <div class="center">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/db/Delaunay_circumcircles_vectorial.svg/1920px-Delaunay_circumcircles_vectorial.svg.png" width="50%" class="invertible"><br>
+            <i>
+                The Delaunay triangulation is defined by the property that no point is inside the circumcircle of any triangle.
+            </i>
+        </div>
+        <p>
+            Before we get in the weeds of the algorithm, we first need the coordinate-free versions of two classic geometric predicates:
+            the point-in-circumcircle (or "incircle") predicate, and (what I'll call) the "isvalid" predicate.
+            Sure, the former can be done by picking a local Euclidean coordinate system and using the 
+            <a href="https://stackoverflow.com/questions/39984709/how-can-i-check-wether-a-point-is-inside-the-circumcircle-of-3-points">usual predicate</a>, 
+            but in the spirit of the last article it would be cleaner if we could do this in a single formula involving only the point distances.
+            Unfortunately, the latter poses more of a genuine problem, as we'll soon see.
+        </p>
+        <h2>A coordinate-free incircle predicate</h2>
+        <p>
+            The core of my formula relies on the concept of the 
+            "<a href="https://en.wikipedia.org/wiki/Power_of_a_point">power of a point</a>"
+            <math><mo>&Pi;</mo><mo>&lpar;</mo><mi>P</mi><mo>&rpar;</mo></math> 
+            in Euclidean triangle geometry.
+            This is defined for a point <i>P</i> with respect to a circle with origin <i>O</i> and radius <i>r</i> as
+        </p>
+        <math display="block">
+            <mo>&Pi;</mo><mo>&lpar;</mo><mi>P</mi><mo>&rpar;</mo>
+            <mo>:=</mo>
+            <msup><mrow><mo>|</mo><mi>P</mi><mi>O</mi><mo>|</mo></mrow><mn>2</mn></msup>
+            <mo>-</mo>
+            <msup><mi>r</mi><mn>2</mn></msup>
+            <mtext>.</mtext>
+        </math>
+        <p>
+            Clearly, this is negative when <i>P</i> is inside the circle and positive when <i>P</i> is outside.
+            In the case when the circle is the circumcircle of a triangle, the power of a point has a 
+            <a href="http://users.math.uoc.gr/~pamfilos/eGallery/problems/Barycentrics.pdf">very clean formula</a> 
+            in terms of the point's (normalized) barycentric coordinates (<i>u</i>&nbsp;:&nbsp;<i>v</i>&nbsp;:&nbsp;<i>w</i>)&nbsp;:
+        </p>
+        <div class="center">
+            <img src="simple_bary.svg" width="35%" class="invertible"><br>
+            <i>
+                u, v, and w denote the relative areas of their respective triangles and a, b, and c denote the lengths of their respective edges.
+            </i>
+        </div><br>
+        <math display="block">
+            <mo>&Pi;</mo><mo>&lpar;</mo><mi>P</mi><mo>&rpar;</mo><mo>:=</mo>
+            <msub><mi>S</mi><mi>A</mi></msub><msup><mi>u</mi><mn>2</mn></msup><mo>+</mo>
+            <msub><mi>S</mi><mi>B</mi></msub><msup><mi>v</mi><mn>2</mn></msup><mo>+</mo>
+            <msub><mi>S</mi><mi>C</mi></msub><msup><mi>w</mi><mn>2</mn></msup>
+            <mtext>.</mtext>
+        </math>
+        <p>
+            Here we borrow from <a href="https://en.wikipedia.org/wiki/Conway_triangle_notation">Conway's triangle notation</a>,
+            where
+        </p>
+        <math display="block">
+            <msub><mi>S</mi><mi>A</mi></msub>
+            <mo>=</mo>
+            <mfrac>
+                <mrow>
+                    <msup><mi>b</mi><mn>2</mn></msup><mo>+</mo>
+                    <msup><mi>c</mi><mn>2</mn></msup><mo>-</mo>
+                    <msup><mi>a</mi><mn>2</mn></msup>
+                </mrow>
+                <mn>2</mn>
+            </mfrac>
+            <mspace width="5px"></mspace>
+            <ms>,</ms>
+            <mspace width="10px"></mspace>
+            <msub><mi>S</mi><mi>B</mi></msub>
+            <mo>=</mo>
+            <mfrac>
+                <mrow>
+                    <msup><mi>c</mi><mn>2</mn></msup><mo>+</mo>
+                    <msup><mi>a</mi><mn>2</mn></msup><mo>-</mo>
+                    <msup><mi>b</mi><mn>2</mn></msup>
+                </mrow>
+                <mn>2</mn>
+            </mfrac>
+            <mspace width="5px"></mspace>
+            <ms>,</ms>
+            <mspace width="10px"></mspace>
+            <ms>and</ms>
+            <mspace width="5px"></mspace>
+            <msub><mi>S</mi><mi>C</mi></msub>
+            <mo>=</mo>
+            <mfrac>
+                <mrow>
+                    <msup><mi>a</mi><mn>2</mn></msup><mo>+</mo>
+                    <msup><mi>b</mi><mn>2</mn></msup><mo>-</mo>
+                    <msup><mi>c</mi><mn>2</mn></msup>
+                </mrow>
+                <mn>2</mn>
+            </mfrac>
+            <mspace width="5px"></mspace>
+            <ms>.</ms>
+        </math>
+        <p>
+            The only problem that remains is to compute these barycentric coordinates.
+            If we assume P is inside the triangle, then the barycentric coordinates can be computed by dividing the area of each subtriangle by the total area of the triangle. 
+        </p>
+        <p>
+            If <i>P</i> is outside the triangle, however, then the <i>Orientation Problem</i> becomes an issue: some of the sub-triangles would be "flipped", meaning their area should be negative.
+            Luckily, this isn't an issue for us &mdash; take a second look at our formula.
+            Because we square the barycentric coordinates, the sign disappears and this never becomes an issue.
+        </p>
+        <p>
+            After simplifying things a little, our full predicate becomes
+        </p>
+        <div class="center">
+            <img src="outside_bary.svg" width="50%" class="invertible">
+        </div>
+        <math display="block" style="padding-bottom: 10px;">
+            <msub><mtext style="font-weight: bold">in_circle</mtext><ms>planar</ms></msub><mo>(</mo>
+            <mi>a</mi><mo>,</mo><mi>b</mi><mo>,</mo><mi>c</mi><mo>,</mo><mi>d</mi><mo>,</mo><mi>e</mi><mo>,</mo><mi>f</mi>
+            <mo>)</mo>
+            <mo>:=</mo>
+            <mo>(</mo>
+                <msup><mi>b</mi><mn>2</mn></msup><mo>+</mo>
+                <msup><mi>c</mi><mn>2</mn></msup><mo>-</mo>
+                <msup><mi>a</mi><mn>2</mn></msup>
+            <mo>)</mo>
+            <mo>(</mo>
+                <mn>4</mn><msup><mi>e</mi><mn>2</mn></msup><msup><mi>f</mi><mn>2</mn></msup><mo>-</mo>
+                <msup>
+                    <mrow>
+                        <mo>(</mo>
+                            <msup><mi>e</mi><mn>2</mn></msup><mo>+</mo><msup><mi>f</mi><mn>2</mn></msup>
+                            <mo>-</mo><msup><mi>a</mi><mn>2</mn></msup>
+                        <mo>)</mo>
+                    </mrow>
+                    <mn>2</mn>
+                </msup>
+            <mo>)</mo>
+        </math>
+        <math display="block" style="padding-bottom: 10px;">
+            <mo>+</mo>
+            <mo>(</mo>
+                <msup><mi>c</mi><mn>2</mn></msup><mo>+</mo>
+                <msup><mi>a</mi><mn>2</mn></msup><mo>-</mo>
+                <msup><mi>b</mi><mn>2</mn></msup>
+            <mo>)</mo>
+            <mo>(</mo>
+                <mn>4</mn><msup><mi>f</mi><mn>2</mn></msup><msup><mi>d</mi><mn>2</mn></msup><mo>-</mo>
+                <msup>
+                    <mrow>
+                        <mo>(</mo>
+                            <msup><mi>f</mi><mn>2</mn></msup><mo>+</mo><msup><mi>d</mi><mn>2</mn></msup>
+                            <mo>-</mo><msup><mi>b</mi><mn>2</mn></msup>
+                        <mo>)</mo>
+                    </mrow>
+                    <mn>2</mn>
+                </msup>
+            <mo>)</mo>
+        </math>
+        <math display="block">
+            <mo>+</mo>
+            <mo>(</mo>
+                <msup><mi>a</mi><mn>2</mn></msup><mo>+</mo>
+                <msup><mi>b</mi><mn>2</mn></msup><mo>-</mo>
+                <msup><mi>c</mi><mn>2</mn></msup>
+            <mo>)</mo>
+            <mo>(</mo>
+                <mn>4</mn><msup><mi>d</mi><mn>2</mn></msup><msup><mi>e</mi><mn>2</mn></msup><mo>-</mo>
+                <msup>
+                    <mrow>
+                        <mo>(</mo>
+                            <msup><mi>d</mi><mn>2</mn></msup><mo>+</mo><msup><mi>e</mi><mn>2</mn></msup>
+                            <mo>-</mo><msup><mi>c</mi><mn>2</mn></msup>
+                        <mo>)</mo>
+                    </mrow>
+                    <mn>2</mn>
+                </msup>
+            <mo>)</mo>
+            <mo><</mo>
+            <mn>0</mn>
+            <mspace width="5px"></mspace>
+            <ms>.</ms>
+        </math>
+        <p>
+            Pretty clean, right?
+        </p>
+        <p> 
+            "But hold up!" You say, "I see that <math><msub><ms></ms><ms>planar</ms></msub></math> subscript! 
+            How would this generalize this to 3D, where the points can be non-planar?"
+        </p>
+        <div class="center">
+            <img src="intrinsic_delaunay.png" width="100%" style="margin: -70px; width: 120%;"><br>
+            <i>A mesh embedded 3D that satisfies an intrinsic Delaunay criteria</i>
+        </div>
+        <p>
+            The key is to consider circumcircles intrinsically:
+            importantly, if a mesh satisfies the Delaunay property, then the triangles each circumcircle lies on can be unflattened to a plane.
+            To adapt our <b>in_circle</b> predicate we can therefore "flatten" a non-planar quadrilateral by calculating the diagonal <i>f</i>
+            for <math><msub><mtext style="font-weight: bold">in_circle</mtext><ms>planar</ms></msub></math> using <tt>flip_d2</tt> from the previous post.
+            With this, our final predicate becomes:
+        </p>
+        <math>
+            <mtext style="font-weight: bold">in_circle</mtext>
+            <mo>(</mo>
+                <mi>a</mi><mo>,</mo><mi>b</mi><mo>,</mo><mi>c</mi><mo>,</mo><mi>d</mi><mo>,</mo><mi>e</mi>
+            <mo>)</mo>
+            <mo>:=</mo>
+            <msub><mtext style="font-weight: bold">in_circle</mtext><ms>planar</ms></msub>
+            <mo>(</mo>
+                <mi>a</mi><mo>,</mo><mi>b</mi><mo>,</mo><mi>c</mi><mo>,</mo><mi>d</mi><mo>,</mo><mi>e</mi><mo>,</mo>
+                <mtext style="font-weight: bold">flip_d</mtext>
+                <mo>(</mo>
+                    <mi>a</mi><mo>,</mo><mi>b</mi><mo>,</mo><mi>c</mi><mo>,</mo><mi>d</mi><mo>,</mo><mi>e</mi>
+                <mo>)</mo>
+            <mo>)</mo>
+        </math>
+        <p>
+            It is important to note that &mdash; unlike the planar predicate &mdash; the order of the points now does matter:
+            the query point must be across from edge <i>c</i>. 
+            In the future, it would be nice to see if this can be simplified to a single formula, not a combination of two.
+        </p>
+        <h2>A coordinate-free "isvalid" predicate</h2>
+        <p>
+            The "isvalid" predicate calculates whether a triangle is flipped or not.
+            Obviously, by this point you might be able to guess that because of the <i>Orientation Problem</i>, we can't know this for a triangle in isolation; 
+            however, we can figure out something related: whether a <i>quadrilateral is folded</i> (along a given edge) or not.
+        </p>
+        <p>
+            Before designing a coordinate-free formula that can calculate this, we need to understand the problem in 3D.
+            Imagine folding a quadrilateral along one of its diagonals such that two triangles are formed, and consider the area of the tetrahedron formed by their hull.
+        </p>
+        <div class="center">
+            <img src="tetrahedron.svg" width="50%" class="invertible"><br>
+            <i>Imagine the above image is in 3D, with quadrilateral a-b-c-d folded along e and edge length f being free.</i>
+        </div>
+        <p>The volume (squared) of the above tetrahedron can be computed using its <a href="https://en.wikipedia.org/wiki/Cayley–Menger_determinant">Cayley-Menger determinant</a>:</p>
+        <math display="block">
+            <mn>288</mn><msup><mi>V</mi><mn>2</mn></msup><mo>=</mo>
+            <ms>det</ms>
+            <mo>[</mo>
+            <mtable>
+                <mtr>
+                    <mtd><mn>0</mn></mtd>
+                    <mtd><msup><mi>a</mi><mn>2</mn></msup></mtd>
+                    <mtd><msup><mi>e</mi><mn>2</mn></msup></mtd>
+                    <mtd><msup><mi>d</mi><mn>2</mn></msup></mtd>
+                    <mtd><mn>1</mn></mtd>
+                </mtr>
+                <mtr>
+                    <mtd><msup><mi>a</mi><mn>2</mn></msup></mtd>
+                    <mtd><mn>0</mn></mtd>
+                    <mtd><msup><mi>b</mi><mn>2</mn></msup></mtd>
+                    <mtd><msup><mi>f</mi><mn>2</mn></msup></mtd>
+                    <mtd><mn>1</mn></mtd>
+                </mtr>
+                <mtr>
+                    <mtd><msup><mi>e</mi><mn>2</mn></msup></mtd>
+                    <mtd><msup><mi>b</mi><mn>2</mn></msup></mtd>
+                    <mtd><mn>0</mn></mtd>
+                    <mtd><msup><mi>c</mi><mn>2</mn></msup></mtd>
+                    <mtd><mn>1</mn></mtd>
+                </mtr>
+                <mtr>
+                    <mtd><msup><mi>d</mi><mn>2</mn></msup></mtd>
+                    <mtd><msup><mi>f</mi><mn>2</mn></msup></mtd>
+                    <mtd><msup><mi>c</mi><mn>2</mn></msup></mtd>
+                    <mtd><mn>0</mn></mtd>
+                    <mtd><mn>1</mn></mtd>
+                </mtr>
+                <mtr>
+                    <mtd><mn>1</mn></mtd>
+                    <mtd><mn>1</mn></mtd>
+                    <mtd><mn>1</mn></mtd>
+                    <mtd><mn>1</mn></mtd>
+                    <mtd><mn>0</mn></mtd>
+                </mtr>
+              </mtable>
+              <mo>]</mo>
+              <ms>.</ms>
+        </math>
+        <p>
+            Imagine fixing the edge lengths <i>a</i>, <i>b</i>, <i>c</i>, <i>d</i>, and <i>e</i>, while letting <i>f</i> be free.
+            Let the quadrilateral be unfolded at first, such that the volume of the tetrahedron is zero.
+            As <i>f</i> decreases, the quadrilateral starts to fold and <i>V</i> increases; <i>V</i> reaches a maximum when the two triangles form a right angle.
+            As <i>f</i> continues to decrease, the quadrilateral folds even more and <i>V</i> starts to decrease as well, until <i>V</i> finally reaches zero.
+            It is interesting to note that the determinant is still continuous at this point (and its initial point): 
+            as <i>f</i> decreases further, the lengths form an invalid tetrahedron and the determinant becomes negative.
+        </p>
+        <div class="center">
+            <img src="folding.svg" width="100%" class="invertible"><br>
+            <i>Imagine the above image is in 3D, with the quadrilateral shown at different stages of folding.</i>
+        </div>
+        <p>
+            I'll define a quadrilateral as "folded" if the area is past its maximum; that is, if the determinant's derivative with respect to <i>f</i> is positive.
+            Futhermore, this derivative has a surprisingly simple formula, giving us our final predicate:
+        </p>
+        <math display="block">
+            <mtext style="font-weight: bold">is_valid</mtext>
+            <mo>(</mo>
+                <mi>a</mi><mo>,</mo><mi>b</mi><mo>,</mo><mi>c</mi><mo>,</mo><mi>d</mi><mo>,</mo><mi>e</mi><mo>,</mo><mi>f</mi>
+            <mo>)</mo>
+            <mo>:=</mo>
+            <mn>4</mn><msup><mi>f</mi><mn>2</mn></msup><mi>e</mi>
+            <mo>(</mo>
+                <msup><mi>a</mi><mn>2</mn></msup><mo>+</mo>
+                <msup><mi>b</mi><mn>2</mn></msup><mo>-</mo>
+                <msup><mi>e</mi><mn>2</mn></msup>
+            <mo>)</mo>
+            <mo>-</mo>
+            <mn>2</mn><mi>e</mi>
+            <mo>(</mo>
+                <msup><mi>f</mi><mn>2</mn></msup><mo>+</mo>
+                <msup><mi>a</mi><mn>2</mn></msup><mo>-</mo>
+                <msup><mi>d</mi><mn>2</mn></msup>
+            <mo>)</mo>
+            <mo>(</mo>
+                <msup><mi>f</mi><mn>2</mn></msup><mo>+</mo>
+                <msup><mi>b</mi><mn>2</mn></msup><mo>-</mo>
+                <msup><mi>c</mi><mn>2</mn></msup>
+            <mo>)</mo>
+            <mo><</mo>
+            <mn>0</mn>
+            <ms>.</ms>
+        </math>
+        <p>
+            It's interesting to note that both of our predicates so far can also be written using Conway's triangle notation.
+        </p>
+        <h2>The triangulation procedure</h2>
+        <p>
+            The idea behind my triangulation algorithm is to pick a point and grow a triangulation from it, one point at a time.
+            At each iteration we add the closest point to the growing cluster, producing a Delaunay triangulation of the convex hull of the new cluster.
+        </p>
+        <p>
+            Before continuing to the algorithm, I strongly recommend reading at least sections 5 and 6 (if not all) of 
+            <a href="https://dl.acm.org/doi/pdf/10.1145/282918.282923">Guibas and Stolfi's classic paper</a> 
+            &mdash; herby referred to as the G&S paper &mdash; from where I borrow some basic topological operations, and from which my algorithm is inspired.
+            It's one of the best-illustrated papers I've ever read, and worth reading for the hand-drawn '80s aesthetic alone.
+            The paper's presentation of a functional calculus for topological operations is also very slick.
+        </p>
+        <pre><code class="language-cpp">// Given the following points:
+//     i ____ l
+//    / \    /
+//   /   \  /
+//  /_____\/
+// k       j           
+//
+// this function returns the following distances:
+//      __d__
+//   / \    /
+//  a   e  c
+// /__b__\/
+auto quad_d2s(
+    const point_id i, const point_id j,
+    const point_id k, const point_id l) 
+{
+    const double a2 = d2(k, i);
+    const double b2 = d2(j, k);
+    const double c2 = d2(l, j);
+    const double d2 = d2(i, l);
+    const double e2 = d2(i, j);
+    const double f2 = d2(k, l);
+    return std::make_tuple(a2, b2, c2, d2, e2, f2);
+}
+
+bool in_circle(
+    const point_id i, const point_id j,
+    const point_id k, const point_id l) 
+{
+    const auto [a2, b2, c2, e2, f2_] = quad_d2s(i, j, k, l);
+    const double f2 = flip_d2(a2, b2, c2, e2);
+
+    const double S0 = b2 + c2 - a2;
+    const double S1 = c2 + a2 - b2;
+    const double S2 = a2 + b2 - c2;
+
+    const double S3 = e2 + f2 - a2;
+    const double S4 = f2 + d2 - b2;
+    const double S5 = d2 + e2 - c2;
+
+    return S0 * (4.0 * e2 * f2 - S3 * S3) +
+        S1 * (4.0 * f2 * d2 - S4 * S4) + 
+        S2 * (4.0 * d2 * e2 - S5 * S5) < 0.0;
+}
+
+bool valid(
+    const point_id i, const point_id j,
+    const point_id k, const point_id l) 
+{
+    const auto [a2, b2, c2, e2, f2] = quad_d2s(i, j, k, l);
+
+    const double e = std::sqrt(e2);
+    const double S0 = a2 + b2 - e2;
+    const double S1 = f2 + a2 - d2;
+    const double S2 = f2 + b2 - c2;
+    return 4.0 * f2 * e * S0 - 2.0 * e * S1 * S2 < 0.0;
+}
+
+//     i ____ l
+//    / \    /
+//   /   \  /
+//  /_____\/
+// k       j
+// Returns whether quadrilateral kilj is folded along ij.
+template&lt;bool o&gt;
+bool unfolded_along(const hedge_id ij) 
+{
+    const hedge_id ik = oprev&lt;o&gt;(ij);
+    const hedge_id il = onext&lt;o&gt;(ij);
+
+    return is_valid(
+        org(ij), dest(ij), 
+        dest(ik), dest(il));
+}
+
+template&lt;bool o&gt;
+void stitch_from(const hedge_id base_begin) 
+{
+    // Return if first edge in triangulation
+    if (onext(base_begin) == base_begin)
+    {
+        return;
+    }
+
+    hedge_id base = base_begin;
+    while (true)
+    {
+        hedge_id cand = onext&lt;o&gt;(base);
+
+        if (unfolded_along&lt;o&gt;(base))
+        {
+            while(in_circle(
+                org(base), dest(base), 
+                dest(cand), dest(onext&lt;o&gt;(cand)))) 
+            {
+                const hedge_id t = onext&lt;o&gt;(cand);
+                delete_edge&lt;o&gt;(cand);
+                cand = t;
+            }
+        }
+
+        if (!unfolded_along&lt;o&gt;(base))
+        {
+            break;
+        }
+
+        base = connect&lt;o&gt;(cand, base);
+    }
+}
+</code></pre>
+<p>
+    If you've read the G&S paper, you might recognize <tt>stitch_from</tt> as a cluster-point version of the cluster-cluster stitching procedure.
+    Starting from an edge <tt>base</tt> connecting the cluster to the new point <i>P</i>, it adds triangles along the cluster's boundary connecting to <i>P</i> until the boundary is no longer visible from <i>P</i>
+    &mdash; when the first fold occurs.
+</p>
+<div class="center">
+    <img src="stitch_from.svg" width="100%" class="invertible"><br>
+    <i>Three iterations of the <tt>stitch_from</tt> loop. Dashed lines represent deleted edges.</i>
+</div>
+<p>
+    Some of the algorithms above have the mesh's orientation as a template parameter. 
+    When the orientation is flipped (<tt>o</tt> is <tt>true</tt>), the half-edge functions act as if the mesh is inside out &mdash; left becomes right and right becomes left.
+    Specifically, functions like <tt>lnext</tt> and <tt>onext</tt> behave like <tt>rnext</tt> and <tt>oprev</tt>.
+    This allows <tt>stitch_from</tt> to work in both directions.
+</p>
+<pre><code class="language-cpp">void triangulate()
+{
+    constexpr double inf = 
+        std::numeric_limits&lt;double&gt;::infinity();
+    assert(points_size() >= 3);
+
+    auto added = std::vector&lt;bool&gt;(points_size(), false);
+
+    auto closest_d2 = std::vector&lt;double&gt;(points_size(), inf);
+
+    auto closest = std::vector&lt;optional_point_id&gt;(
+        points_size(), optional_point_id::invalid
+    );
+
+    // Add the first point and initialize the distances 
+    // from each point to this point.
+    {
+        const point_id i = point_id(0);
+        for (const point_id j : d2.adjacent(i))
+        {
+            closest_d2[j] = d2(i, j);
+            closest[j] = i;
+        }
+        
+        added[i] = true;
+    }
+
+    point_id i = argmin(closest_d2);
+    while (closest[i].is_valid())
+    {
+        const point_id j = closest[i].as_valid();
+
+        const hedge_id base = make_edge();
+        org(base) = j;
+        dest(base) = i;
+
+        // Add stitches in one direction, then the other.
+        stitch_from&lt;true&gt;(base);
+        stitch_from&lt;false&gt;(base);
+
+        // For each point that hasn't yet been added, if the 
+        // newly added point is closer then update it's 
+        // closest point.
+        for (const point_id j : d2.adjacent(i))
+        {
+            if (added[j])
+            {
+                continue;
+            }
+
+            const double d2_ij = d2(i, j);
+            if (d2_ij &lt; closest_d2[j])
+            {
+                closest_d2[j] = d2_ij;
+                closest[j] = i;
+            }
+        }
+
+        closest_d2[i] = inf;
+        closest[i] = optional_point_id::invalid;
+
+        added[i] = true;
+        i = argmin(closest_d2);
+    }
+        </code></pre>
+        <p>
+            Unlike Guibas and Stolfi's algorithm, this algorithm stitches in points from the middle-out instead of from side-to-side.
+            This way we can skip the G&S <tt>basel</tt> initialization procedure (which is difficult to implement in a coordinate-free way), 
+            and just use the edge connecting the cluster to the cluster's closest point to start the stitch.
+        </p>
+        <p>
+            This relies on the fact that that this edge is in the Delaunay triangulation. 
+            As luck would have it, this is always true because the collection of edges from the cluster to the next closest point is exactly the point set's
+            <a href="https://en.wikipedia.org/wiki/Euclidean_minimum_spanning_tree">Euclidean minimum spanning tree</a>, 
+            which is known to be a subgraph of its Delaunay triangulation.
+            In fact, CS majors reading this might have recognized the above algorithm as just a fancy version of 
+            <a href="https://en.wikipedia.org/wiki/Prim's_algorithm">Prim's algorithm</a>!
+        </p>
+        <p>
+            In 2D, this algorithm makes the assumption that each point added is outside the existing triangulation. 
+            Somewhat conversely, this means that the new triangulation after each iteration can't contain points that haven't yet been added.
+            By always adding the closest point to the cluster, it is trivial to prove that the next point will always be outside the convex hull of the previous set.
+        </p>
+        <h2>Conclusion and future work</h2>
+        <p>
+            In this post, I introduced an algorithm for generating a Delaunay triangulation given a point set's Euclidean distance matrix.
+            Unlike previous works, this algorithm generalizes to 3D point sets by using a more general formulation.
+            Previous works in this space typically focus on solving the related problem of finding a 
+            <a href="https://en.wikipedia.org/wiki/Voronoi_diagram">Vornoi diagram</a> and then taking its dual; my method solves the primal problem directly.
+            However, there's still many things left to figure out.
+        </p>
+        <p>
+            Currently, this algorithm only works for surfaces that are topological disks.
+            It would be nice to generalize this algorithm to reconstruct shapes of different topology, 
+            then prove what properties the point set needs such that the reconstructed surface is homeomorphic to the input shape.
+        </p>
+        <p>
+            It can also be useful to generate Delaunay triangulations under Hessian (or in 3D, shape operator)-based metrics, such as 
+            <math>
+                <msub>
+                    <mrow>
+                        <mo>&langle;</mo><mo>&bull;</mo><mo>,</mo><mo>&bull;</mo><mo>&rangle;</mo>
+                    </mrow>
+                    <mrow><mo>|</mo><mi>H</mi><mo>|</mo></mrow>
+                </msub>
+            </math>
+            or 
+            <math>
+                <msub>
+                    <mrow>
+                        <mo>&langle;</mo><mo>&bull;</mo><mo>,</mo><mo>&bull;</mo><mo>&rangle;</mo>
+                    </mrow>
+                    <mrow><msup><mi>H</mi><mn>2</mn></msup></mrow>
+                </msub>
+                <mspace width="3px"></mspace>
+            </math>.
+            If we assume the Hessian <i>H</i> of a function <i>f</i> is piecewise-constant over each edge, the length for an edge with direction 
+            <math><msub><mrow><mi>d</mi><mi>p</mi></mrow><mrow><mi>i</mi><mi>j</mi></mrow></msub></math> under the latter metric can be calculated 
+            conveniently using the per-point gradient <math><msub><mrow><mo>(</mo><mo>&nabla;</mo><mi>f</mi><mo>)</mo></mrow><mi>i</mi></msub><mspace width="3px"></mspace></math>:
+        </p>
+        <math display="block" style="padding-bottom: 10px;">
+            <msubsup>
+                <mrow>
+                    <mo>||</mo>
+                        <msub><mrow><mi>d</mi><mi>p</mi></mrow><mrow><mi>i</mi><mi>j</mi></mrow></msub>
+                    <mo>||</mo>
+                </mrow>
+                <mrow><msup><mi>H</mi><mn>2</mn></msup></mrow>
+                <mn>2</mn>
+            </msubsup>
+            <mo>=</mo>
+            <msub>
+                <mrow>
+                    <mo>&langle;</mo>
+                        <msub><mrow><mi>d</mi><mi>p</mi></mrow><mrow><mi>i</mi><mi>j</mi></mrow></msub>
+                        <mo>,</mo>
+                        <msub><mrow><mi>d</mi><mi>p</mi></mrow><mrow><mi>i</mi><mi>j</mi></mrow></msub>
+                    <mo>&rangle;</mo>
+                </mrow>
+                <mrow><msup><mi>H</mi><mn>2</mn></msup></mrow>
+            </msub>
+            <mo>=</mo>
+            <msub>
+                <mrow>
+                    <mo>&langle;</mo>
+                        <mi>H</mi><msub><mrow><mi>d</mi><mi>p</mi></mrow><mrow><mi>i</mi><mi>j</mi></mrow></msub>
+                        <mo>,</mo>
+                        <mi>H</mi><msub><mrow><mi>d</mi><mi>p</mi></mrow><mrow><mi>i</mi><mi>j</mi></mrow></msub>
+                    <mo>&rangle;</mo>
+                </mrow>
+                <mrow><msup><ms>R</ms><mi>n</mi></msup></mrow>
+            </msub>
+            <mo>=</mo>
+            <msub>
+                <mrow>
+                    <mo>&langle;</mo>
+                        <msub><mrow><mi>d</mi><mo>(</mo><mo>&nabla;</mo><mi>f</mi><mo>)</mo></mrow><mrow><mi>i</mi><mi>j</mi></mrow></msub>
+                        <mo>,</mo>
+                        <msub><mrow><mi>d</mi><mo>(</mo><mo>&nabla;</mo><mi>f</mi><mo>)</mo></mrow><mrow><mi>i</mi><mi>j</mi></mrow></msub>
+                    <mo>&rangle;</mo>
+                </mrow>
+                <mrow><msup><ms>R</ms><mi>n</mi></msup></mrow>
+            </msub>
+        </math>
+        <math display="block">
+            <mo>=</mo>
+            <msubsup>
+                <mrow>
+                    <mo>||</mo>
+                        <msub><mrow><mi>d</mi><mo>(</mo><mo>&nabla;</mo><mi>f</mi><mo>)</mo></mrow><mrow><mi>i</mi><mi>j</mi></mrow></msub>
+                    <mo>||</mo>
+                </mrow>
+                <mrow><msup><ms>R</ms><mi>n</mi></msup></mrow>
+                <mn>2</mn>
+            </msubsup>
+            <mspace width="3px"></mspace><ms>.</ms>
+        </math>
+        <p>
+            It still remains to be shown whether this is a viable approximation for constructing anisotropic Delaunay triangulations, 
+            or whether the point samples need to have certain properties for this approximation to hold.
+        </p>
+        <p>
+            Finally, this algorithm's runtime is 
+            <math><mi>O</mi><mo>(</mo><msup><mrow><mo>|</mo><mi>E</mi><mo>|</mo></mrow><mn>2</mn></msup><mo>)</mo></math>,
+            where <math><mo>|</mo><mi>E</mi><mo>|</mo><mo>=</mo><mi>O</mi><mo>(</mo><msup><mrow><mo>|</mo><mi>V</mi><mo>|</mo></mrow><mn>2</mn></msup><mo>)</mo></math> 
+            is the number of edges in the EDM. 
+            Some of this can improve with a better implementation of Prims' algorithm, 
+            but it still can't be as fast as the G&S algorithm because of its incremental nature.
+            In the next post, I plan to introduce an algorithm with runtime 
+            <math><mi>O</mi><mo>(</mo><mo>|</mo><mi>V</mi><mo>|</mo><ms>log</ms><mo>(</mo><mo>|</mo><mi>V</mi><mo>|</mo><mo>)</mo><mo>)</mo></math>,
+            with a catch &mdash; we need a bit of help from the embedding.
+        </p>
+    </body>
+</html>

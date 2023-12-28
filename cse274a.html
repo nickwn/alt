@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>CSE 274 Proposal</title>
+        <link rel="icon" type="image/png" href="favicon.ico">
+        <link rel="stylesheet" type="text/css" href="style-simple.css">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body>
+        <h1>CSE 274 Project Progress</h1>
+        <p>
+            For my project, I decided to implement 
+            <a href="https://cseweb.ucsd.edu//~viscomp/classes/cse274/fa21/papers/a40-moon.pdf">Adaptive Polynomial Rendering</a>
+            by B. Moon, S. McDonagh, K. Mitchell and M. Gross. The general idea of the paper is to fit 2D polynomials to blocks of the image, 
+            then estimate the error of the reconstruction and adaptively sample more at areas of high error. 
+        </p> 
+        <p>
+            I decided to implement the paper using <a href="https://www.mitsuba-renderer.org/">Mitsuba 2</a>. Mitsuba allows a nice level of control — I was 
+            able to specify my own rays to shoot into the scene and customize the integrator enough to return Arbitrary Output Values like depth and screen normal. 
+            The paper also mentioned using output values like texture and visibility, but unfortunately Mitsuba doesn't output those values. 
+            Texture would be especially helpful so I might look into it further.
+        </p>
+        <p>
+            The first part of the paper focused on 
+            <a href="https://en.wikipedia.org/wiki/Polynomial_regression#Matrix_form_and_calculation_of_estimates">fitting a polynomial to the data</a>. 
+            This can be found by solving an overdetermined linear system of equations using ordinary least squares estimation.
+            The paper modifies the polynomial function to fit the data better by adding a linear function to it that uses a feature vector 
+            of the normals and depth as an input. There is one small issue with the paper at this point — The paper describes the reconstruction 
+            equation as:
+        </p>
+        <div class="center"><img src="media/cse274/equation1.png" class="invertible"></div>
+        <p>
+            But when you look at the previous paper by Moon that is referenced (and the actual 
+            <a href="https://en.wikipedia.org/wiki/Linear_least_squares#Derivation_of_the_normal_equations">normal equations</a>),
+            the equation should really be:
+        </p>
+        <div class="center"><img src="media/cse274/equation2.png" class="invertible"></div>
+        <p>
+            So, this took me a second to figure out. After implementing this equation in python I was able to get fitting working.
+            To test, I rendered the cornell box in Mitsuba:
+        </p>
+        <div class="center">
+            <img src="media/cse274/output1.png"><br>
+            <i>Cornell box at 1 sample per pixel, 232 × 232 pixels</i>
+        </div>
+        <p>
+            After fitting the polynomials to blocks of the image, the new "denoised" image looks like:
+        </p>
+        <div class="center">
+            <img src="media/cse274/output2.png"><br>
+            <i>cbox @ 1spp, 232 × 232, polynomial fitted, 29 × 29 block size</i>
+        </div>
+        <p>
+            The polynomials don't appear to fit very well in high variance areas, for example at the front of the smaller box 
+            and on the ground between the larger box and the red wall. The polynomials also aren't fitted to tonemapped images, 
+            so at high-difference areas like near the boundary of the light the polynomial doesn't appear to fit very well. 
+            Boundaries between polynomial patches don't look great either because there's no overlap. Later I'll overlap the patches a bit
+            and properly combine their values using:
+        </p>
+        <div class="center"><img src="media/cse274/equation3.png" class="invertible"></div>
+        <p>
+            I'll work to fix all of these problems in the remaining weeks of this quarter. The paper also has three other parts to it: determining
+            the optimal polynomial order (the above images uses cubic polynomials), determining the error of the reconstruction, and sampling again
+            based off the error. Hopefully this should go a little faster since I spent a lot of my time these first few weeks learning how to use
+            Mitsuba and numpy.
+        </p>
+        <p>Here's some more results at higher sample rates (non-adaptive)</p>
+        <div class="center">
+            <img src="media/cse274/output_2spp.png"><br>
+            <i>2spp, 232 × 232 pixels</i><br>
+            <br>
+            <img src="media/cse274/output_2spp_apr.png"><br>
+            <i>2spp, 232 × 232 pixels, polynomial fitted</i><br>
+            <br>
+            <img src="media/cse274/output_4spp.png"><br>
+            <i>4spp, 232 × 232 pixels</i><br>
+            <br>
+            <img src="media/cse274/output_4spp_apr.png"><br>
+            <i>4spp, 232 × 232 pixels, polynomial fitted</i><br>
+            <br>
+            <img src="media/cse274/output_8spp.png"><br>
+            <i>8spp, 232 × 232 pixels</i><br>
+            <br>
+            <img src="media/cse274/output_8spp_apr.png"><br>
+            <i>8spp, 232 × 232 pixels, polynomial fitted</i><br>
+        </div>
+        <p>
+            I realized while making these that the polynomial images get brighter as spp increases because I'm not re-multiplying each reconstructed
+            sample by the ray weight. I'll fix this later too.
+        </p>
+    </body>
+</html>

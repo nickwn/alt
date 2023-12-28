@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Geodesic Quantities</title>
+        <link rel="icon" type="image/png" href="favicon.ico">
+        <link rel="stylesheet" type="text/css" href="styles/code-style.min.css">
+        <link rel="stylesheet" type="text/css" href="style-simple.css">
+        <script src="highlight.min.js"></script>
+        <script>hljs.highlightAll();</script>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body>
+        <h1>Intrinsic Geometry Processing and Geodesic&nbsp;Paths</h1>
+        <p>
+            As the first post in a short series of posts I plan to write on 
+            <a href="https://www.cs.cmu.edu/~kmcrane/Projects/NavigatingIntrinsicTriangulations/index.html">intrinsic</a> geometry processing, 
+            I wanted to write up a slightly interesting way to think about geodesic paths on triangle meshes in a completely coordinate-free way.
+            Usually it's safe to assume that a mesh is embedded in a 3D coordinate system; however, intrinsic geometry processing algorithms 
+            attempt to do their calculations using only the edge lengths &mdash; or 
+            <i>discrete metric</i> &mdash; of the given mesh. If the need for these algorithms seems esoteric to you, then try adapting 
+            <a href="https://www.cs.princeton.edu/courses/archive/fall05/cos528/handouts/A%20Simple%20and%20fast.pdf">this algorithm</a> for 
+            triangulating 2D polygons to work in 3D and come back to this article when you've finished. 
+        </p>
+        <p>
+            If its been 3 months and you're crying and shivering, your job lost and engagement called off
+            because you've spent every waking hour thinking about this problem, then hopefully you'll be relieved to hear this: 
+            unlike in 2D, not all 3D polygons are triangulatable, and deciding whether a 3D polygon is triangulatable is actually NP-complete!
+            Futhermore, the problem can also be ambiguous since valid triangulations can have significantly different visual properties.
+        </p>
+        <div class="center">
+            <img src="polys.png" width="80%" class="invertible"><br>
+            <i>Both of the triangulations on the right are valid for the polygon on the left.</i>
+        </div>
+        <p>
+            To narrow the search, it can be useful to optimize for some heuristic to get the most "correct" triangulation; 
+            for example, minimizing the area or maximizing 
+            the minimum triangle angle (to obtain a 
+            <a href="https://en.wikipedia.org/wiki/Constrained_Delaunay_triangulation">constrained Delaunay triangulation</a>).
+        </p>
+        <p>
+            I could get into the joys of polygon triangulation in another day, but hopefully from this example it's easy to understand how
+            a coordinate-free approach might not only generalize to multiple dimensions and be easier to implement, but also possibly reveal some deeper 
+            properties of the result. 
+            They can also be useful when adapting geometric algorithms to use metrics that aren't derived directly from the coordinates of an embedding 
+            &mdash; more on this later.
+        </p>
+        <p>
+            I wanted to start this series with a simpler algorithm, but hopefully you can still get a taste for how elegant these algorithms can be. 
+        </p>
+        <h2>Computing geodesic lengths</h2>
+        <p>
+            I'll assume the you, the reader, already have an understanding of what a geodesic path is, because I can't explain everything. 
+            In simplified terms it's a straight path along the surface of a triangle mesh connecting two points.
+            Let's say we have some cool algorithm that gives us the strip of triangles a geodesic path crosses as it is traced between two points on a mesh;
+            perhaps it is computed by <a href="https://nmwsharp.com/research/flip-geodesics/">this algorithm</a> using 
+            <a href="https://markjgillespie.com/Research/integer-coordinates/index.html">this data structure</a>. 
+            But when it comes time to trace the path along the strip and compute the coordinates of the edge crossings, these popular algorithms 
+            depart from a coordinate-free perspective.
+            Instead, they "lay the triangle strip out" on an arbitrarily-chosen 2D grid and compute the geodesic path length 
+            and crossings using the 2D coordinates of the triangles. 
+            I propose a different way to compute these quantities, using only the edge lengths of the triangles in the strip.
+        </p>
+        <div class="center"><img src="geodesic_strip.svg" width="60%" class="invertible"></div>
+        <p>
+            The core of my method relies on 
+            <a href="https://www.awesomemath.org/wp-pdf-files/math-reflections/mr-2022-04/mr_4_2022_geometry_paper.pdf">this nifty equation</a> 
+            for the distance (squared) between the opposite points of two adjacent triangles using their own edge lengths
+            (<math><mi>a</mi><mo>,</mo><mi>b</mi><mo>,</mo><mi>c</mi><mo>,</mo><mi>d</mi></math>) and shared edge length (<math><mi>e</mi></math>):
+        </p>
+        <div class="center"><img src="quadrilateral.svg" width="30%" class="invertible"></div>
+        <math display="block">
+            <mrow>
+                <mn>2</mn><msup><mi>f</mi><mn>2</mn></msup>
+                <mo>=</mo>
+                <msup><mi>a</mi><mn>2</mn></msup><mo>+</mo>
+                <msup><mi>b</mi><mn>2</mn></msup><mo>+</mo>
+                <msup><mi>c</mi><mn>2</mn></msup><mo>+</mo>
+                <msup><mi>d</mi><mn>2</mn></msup><mo>-</mo>
+                <msup><mi>e</mi><mn>2</mn></msup><mo>+</mo>
+            </mrow>
+            <mrow>
+                <mfrac>
+                    <mrow>
+                        <mo>&lpar;</mo>
+                            <msup><mi>a</mi><mn>2</mn></msup><mo>-</mo>
+                            <msup><mi>b</mi><mn>2</mn></msup>
+                        <mo>&rpar;</mo>
+                        <mo>&lpar;</mo>
+                            <msup><mi>c</mi><mn>2</mn></msup><mo>-</mo>
+                            <msup><mi>d</mi><mn>2</mn></msup>
+                        <mo>&rpar;</mo>
+                    </mrow>
+                    <msup><mi>e</mi><mn>2</mn></msup>
+                </mfrac>
+            </mrow>
+            <mo>+</mo>
+            <mrow>
+                <mfrac>
+                    <msqrt>
+                        <mo>&lpar;</mo>
+                            <mn>4</mn>
+                            <msup><mi>a</mi><mn>2</mn></msup>
+                            <msup><mi>b</mi><mn>2</mn></msup><mo>-</mo>
+                            <msup>
+                                <mrow>
+                                    <mo>&lpar;</mo>
+                                        <msup><mi>a</mi><mn>2</mn></msup><mo>+</mo>
+                                        <msup><mi>b</mi><mn>2</mn></msup><mo>-</mo>
+                                        <msup><mi>e</mi><mn>2</mn></msup>
+                                    <mo>&rpar;</mo>
+                                </mrow>
+                                <mn>2</mn>
+                            </msup>
+                        <mo>&rpar;</mo>
+                        <mo>&lpar;</mo>
+                            <mn>4</mn>
+                            <msup><mi>c</mi><mn>2</mn></msup>
+                            <msup><mi>d</mi><mn>2</mn></msup><mo>-</mo>
+                            <msup>
+                                <mrow>
+                                    <mo>&lpar;</mo>
+                                        <msup><mi>c</mi><mn>2</mn></msup><mo>+</mo>
+                                        <msup><mi>d</mi><mn>2</mn></msup><mo>-</mo>
+                                        <msup><mi>e</mi><mn>2</mn></msup>
+                                    <mo>&rpar;</mo>
+                                </mrow>
+                                <mn>2</mn>
+                            </msup>
+                        <mo>&rpar;</mo>
+                    </msqrt>
+                    <msup><mi>e</mi><mn>2</mn></msup>
+                </mfrac>
+            </mrow>
+        </math>
+        <p>
+            It gets a little chunky towards the end, but hopefully you'll learn to love it. 
+            The paper says that this equation works for convex quadrilaterals, but the specific property it expects is bit more subtle:
+        </p>
+        <div class="digression">
+            <h2>The "Orientation Problem"</h2>
+            <p>
+                It's interesting to note that our beautiful equation for the second diagonal of a quadrilateral secretly makes a hidden assumption:
+                it assumes that the quadrilateral is not "folded"; that is, neither the triangles are flipped.
+            </p>
+            <p>
+                We wouldn't have this problem if we were using 2D coordinates, but if we were in 3D it would be harder to define whether a triangle is "flipped".
+                This difference is at the core of many issues that appear when porting 2D geometric algorithms to 3D, and working from the intrinsic
+                perspective forces us to address these from the start.
+            </p>
+            <p>
+                We'll see this problem appear more in later blog entries, where it really becomes a pain in the butt.
+            </p>
+        </div>
+        <p>
+            To compute the geodesic path length, the idea is to incrementally compute the distance from the starting point to 
+            points that are further and futher away until the end point is reached. 
+            At each iteration, we use the previously computed distances to compute the next furthest distance.
+        </p>
+        <div class="center">
+            <img src="algorithm_linear.svg" width="80%" class="invertible"><br>
+            <i>
+                Each image represents an iteration; in each iteration, we compute the length of the bold dashed diagonal. 
+                Note that the diagonals computed in earlier iterations are used in the computations of later iterations.
+                In the last iteration, we have computed the final geodesic length.
+            </i>
+        </div>
+        <p>
+            To be more precise, here's some code for the algorithm:
+        </p>
+        <pre><code class="language-cpp">double flip_d2(
+    const double a2, 
+    const double b2, 
+    const double c2, 
+    const double d2, 
+    const double e2
+) {
+    const double x = a2 + b2 - e2;
+    const double y = c2 + d2 - e2;
+    const double double_f2 = a2 + b2 + c2 + d2 - e2 + 
+        (((a2 - b2) * (c2 - d2)) + std::sqrt(
+            (4.0 * a2 * b2 - x * x ) * 
+            (4.0 * c2 * d2 - y * y))) / e2;
+    return 0.5 * double_f2;
+}
+
+// an edge defined by its strip-local point indices
+using strip_edge = std::pair&lt;std::size_t, std::size_t&gt;
+
+// intrinsic_mesh is a standard half-edge mesh endowed with 
+// a discrete metric (d2) returning the length squared for 
+// a given half edge
+void crossings_to_strip_edges(
+    const intrinsic_mesh& im,
+    std::span&lt;const hedge_id&gt; crossings, 
+    std::span&lt;strip_edge&gt; strip_edges_out
+) {
+    point_id i = im.org(crossings.front());
+    point_id j = im.dest(crossings.front());
+    std::size_t i_idx = 0;
+    std::size_t j_idx = 1;
+
+    strip_edges_out[0] = std::make_pair(i_idx, j_idx);
+
+    for (std::size_t idx = 1; idx &lt; crossings.size(); idx++)
+    {
+        const hedge_id = crossings[idx];
+        if (im.dest(ij) == i)
+        {
+            j = im.org(ij);
+            j_idx = next_idx;
+        }
+        else 
+        {
+            i = im.dest(ij);
+            i_idx = next_idx;
+        }
+
+        strip_edges_out[idx] = std::make_pair(i_idx, j_idx);
+    }
+}
+
+void strip_d2s(
+    const intrinsic_mesh& im,
+    std::span&lt;const hedge_id&gt; crossings, 
+    std::span&lt;const strip_edge&gt; strip_edges,
+    std::span&lt;const double&gt; d2s_out
+) {
+    d2s[0] = im.d2(im.lnext(crossings.front()));
+    d2s[1] = im.d2(im.lprev(crossings.front()));
+
+    for (std::size_t idx = 0; idx &lt; crossings.size(); idx++)
+    {
+        const auto [i_idx, j_idx] = strip_edges[idx];
+        const hedge_id ij = crossings[idx]
+        const hedge_id ji = im.sym(ij);
+
+        const double d2_ij = d2(ij);
+        const double d2_il = d2(im.lprev(ji));
+        const double d2_jl = d2(im.lnext(ji));
+        const double d2_ki = d2s[i_idx];
+        const double d2_kj = d2s[j_idx];
+
+        d2s[idx + 2] = flip_d2(d2_ki, d2_il, d2_jl, d2_kj, d2_ij);
+    }
+}
+
+double geodesic_d2(
+    const intrinsic_mesh& im,
+    std::span&lt;const hedge_id&gt; crossings
+) {
+    auto strip_edges = std::vector&lt;strip_edge&gt;(crossings.size());
+    crossings_to_strip_edges(im, crossings, strip_edges);
+
+    auto d2s = std::vector&lt;double&gt;(crossings.size() + 2);
+    strip_d2s(im, crossings, strip_edges, d2s);
+    return d2s.back();
+}
+</code></pre>
+        <p>
+            In the code above, <tt>strip_d2s</tt> successively calculates the geodesic lengths, with the last value in <tt>d2s_out</tt> being the length of the complete path.
+        </p>
+        <h2>Computing the crossing locations</h2>
+        <p>
+            The location of a geodesic path's intersection with a given edge of the strip can then be calculated by finding the ratio of the areas of 
+            the triangles found by flipping the interior edge of the triangulation defined by the given edge and the path's start/end points. 
+            The intersection point can then be found by interpolating between the edge's end points using the normalized ratio of the areas.
+            Simple!
+        </p>
+        <p>
+            More precisely, let <i>A<sub>ikl</sub></i> and <i>A<sub>jkl</sub></i> denote the areas of the triangles <i>ikl</i> and <i>jkl</i> 
+            (computed using <a href="https://en.wikipedia.org/wiki/Heron%27s_formula">Heron's formula</a>) in the picture below.
+        </p>
+        <div class="center"><img src="edge_crossing.svg" width="40%" class="invertible"></div>
+        <p>
+            Then the exact crossing location for edge <i>ij</i> (the red edge) can be computed as
+        </p>
+        <div class="center">
+        <math>
+            <mrow>
+                <mi>u</mi>
+                <mo>=</mo>
+                <mfrac>
+                    <msub><mi>A</mi><mrow><mi>i</mi><mi>k</mi><mi>l</mi></mrow></msub>
+                    <mrow>
+                        <msub><mi>A</mi><mrow><mi>i</mi><mi>k</mi><mi>l</mi></mrow></msub>
+                        <mo>+</mo>
+                        <msub><mi>A</mi><mrow><mi>j</mi><mi>k</mi><mi>l</mi></mrow></msub>
+                    </mrow>
+                </mfrac>
+            </mrow>
+        </math>
+        <br><br>
+        <math>
+            <mrow>
+                <msub><mi>p</mi><mtext>crossing</mtext></msub>
+                <mo>=</mo>
+                <mo>&lpar;</mo><mn>1</mn><mo>-</mo><mi>u</mi><mo>&rpar;</mo>
+                <msub><mi>p</mi><mi>i</mi></msub>
+                <mo>+</mo>
+                <mi>u</mi>
+                <msub><mi>p</mi><mi>j</mi></msub>
+            </mrow>
+        </math>,
+        </div>
+        <p>
+            where <i>p<sub>i</sub></i> and <i>p<sub>j</sub></i> are the coordinates for points <i>i</i> and <i>j</i>.
+            This requires calling <tt>strip_d2s</tt> twice to get the diagonal lengths from both of the strip's endpoints;
+            then all that's left is to use some simple index arithmetic to transform the <tt>strip_edges</tt> to index into the reversed array.
+            I trust you can figure it out.
+        </p>
+        <p>
+            In the next post, I hope to introduce a new fully intrinsic formulation for Delaunay triangulation, including a 
+            coordinate-free point-in-circumcircle geometric predicate.
+        </p>
+    </body>
+</html>

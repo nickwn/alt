@@ -1,0 +1,84 @@
+@import url('https://fonts.googleapis.com/css2?family=Courier+Prime&family=EB+Garamond:ital,wght@0,500;1,500&family=Vollkorn:ital@0;1&display=swap');
+
+body {
+    margin: 40px auto;
+    max-width: 800px;
+    line-height: 1.6;
+    font-size: 18px;
+    color: #444;
+    padding: 0 20px;
+    font-size: 17px;
+    font-family: 'EB Garamond', serif;
+}
+
+h1 {
+    margin: 100px auto;
+    max-width: 600px;
+    text-align: center;
+    font-size: 23px;
+    font-weight: 300;
+    line-height: 1.2;
+    font-family: 'Courier Prime', monospace;
+}
+
+h2, h3 {
+    font-size: 27px;
+    font-weight: 500;
+    line-height: 1.2;
+}
+
+a {
+    text-decoration: none;
+    color: #7467c2;
+}
+
+.date {
+    text-align: right;
+    font-style: italic;
+}
+
+pre {
+    background: #e6e4ed;
+    color: #222;
+    page-break-inside: avoid;
+    font-family: monospace;
+    max-width: 100%;
+    overflow: auto;
+    padding: 1em 1.5em;
+    display: block;
+    word-wrap: break-word;
+    border-radius: 5px;
+}
+
+.center {
+    display: block;
+    align-items: center;
+    text-align: center;
+}
+
+.tab { 
+    margin-left: 40px; 
+    margin-right: 40px; 
+}
+
+.fit {
+    max-width: 100%;
+}
+
+@media (prefers-color-scheme: dark) {
+    body {
+        background-color: black;
+        color: #CCC;
+    }
+    a {
+        color: #84aed4
+    }
+    pre {
+        background: #222;
+        color: inherit
+    }
+    .invertible {
+        -webkit-filter: invert(1);
+        filter: invert(1);
+    }
+}
