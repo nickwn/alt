@@ -12,7 +12,7 @@
     <body>
         <h1>Coordinate-Free Delaunay Triangulation</h1>
         <p>
-            In the last post of this multi-part series, I introduced the concept of intrinsic geometry processing and mentioned a few of its benefits.
+            In the last post of this multi-part series, I introduced the concept of distance geometry processing and mentioned a few of its benefits.
             I wanted to start with a simple example to get readers comfortable with a coordinate-free perspective on geometry processing algorithms,
             but in this article we'll dive deeper and really start to reap some of the benefits.
         </p>
@@ -21,7 +21,6 @@
             <a href="https://en.wikipedia.org/wiki/Delaunay_triangulation">Delaunay triangulation</a> 
             algorithm, starting from a set of points and their
             <a href="https://en.wikipedia.org/wiki/Euclidean_distance_matrix">Euclidean distance matrix</a> (EDM).
-            The algorithm actually only uses a subset of the distances in the EDM, so this requirement can be relaxed &mdash; but more on this later.
         </p>
         <div class="center">
             <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/db/Delaunay_circumcircles_vectorial.svg/1920px-Delaunay_circumcircles_vectorial.svg.png" width="50%" class="invertible"><br>
@@ -32,10 +31,7 @@
         <p>
             Before we get in the weeds of the algorithm, we first need the coordinate-free versions of two classic geometric predicates:
             the point-in-circumcircle (or "incircle") predicate, and (what I'll call) the "isvalid" predicate.
-            Sure, the former can be done by picking a local Euclidean coordinate system and using the 
-            <a href="https://stackoverflow.com/questions/39984709/how-can-i-check-wether-a-point-is-inside-the-circumcircle-of-3-points">usual predicate</a>, 
-            but in the spirit of the last article it would be cleaner if we could do this in a single formula involving only the point distances.
-            Unfortunately, the latter poses more of a genuine problem, as we'll soon see.
+            Sure, both can be done by using the points' coordinates, but in the spirit of the last article it would be cleaner if we could do this in a single formula involving only the point distances.
         </p>
         <h2>A coordinate-free incircle predicate</h2>
         <p>
@@ -76,6 +72,7 @@
             Here we borrow from <a href="https://en.wikipedia.org/wiki/Conway_triangle_notation">Conway's triangle notation</a>,
             where
         </p>
+        <pre class="equation">
         <math display="block">
             <msub><mi>S</mi><mi>A</mi></msub>
             <mo>=</mo>
@@ -118,6 +115,7 @@
             <mspace width="5px"></mspace>
             <ms>.</ms>
         </math>
+        </pre>
         <p>
             The only problem that remains is to compute these barycentric coordinates.
             If we assume P is inside the triangle, then the barycentric coordinates can be computed by dividing the area of each subtriangle by the total area of the triangle. 
@@ -133,6 +131,7 @@
         <div class="center">
             <img src="outside_bary.svg" width="50%" class="invertible">
         </div>
+        <pre class="equation">
         <math display="block" style="padding-bottom: 10px;">
             <msub><mtext style="font-weight: bold">in_circle</mtext><ms>planar</ms></msub><mo>(</mo>
             <mi>a</mi><mo>,</mo><mi>b</mi><mo>,</mo><mi>c</mi><mo>,</mo><mi>d</mi><mo>,</mo><mi>e</mi><mo>,</mo><mi>f</mi>
@@ -200,6 +199,7 @@
             <mspace width="5px"></mspace>
             <ms>.</ms>
         </math>
+        </pre>
         <p>
             Pretty clean, right?
         </p>
@@ -218,6 +218,7 @@
             for <math><msub><mtext style="font-weight: bold">in_circle</mtext><ms>planar</ms></msub></math> using <tt>flip_d2</tt> from the previous post.
             With this, our final predicate becomes:
         </p>
+        <pre class="equation">
         <math>
             <mtext style="font-weight: bold">in_circle</mtext>
             <mo>(</mo>
@@ -233,6 +234,7 @@
                 <mo>)</mo>
             <mo>)</mo>
         </math>
+        </pre>
         <p>
             It is important to note that &mdash; unlike the planar predicate &mdash; the order of the points now does matter:
             the query point must be across from edge <i>c</i>. 
@@ -313,6 +315,7 @@
             I'll define a quadrilateral as "folded" if the area is past its maximum; that is, if the determinant's derivative with respect to <i>f</i> is positive.
             Futhermore, this derivative has a surprisingly simple formula, giving us our final predicate:
         </p>
+        <pre class="equation">
         <math display="block">
             <mtext style="font-weight: bold">is_valid</mtext>
             <mo>(</mo>
@@ -341,6 +344,7 @@
             <mn>0</mn>
             <ms>.</ms>
         </math>
+        </pre>
         <p>
             It's interesting to note that both of our predicates so far can also be written using Conway's triangle notation.
         </p>
@@ -435,7 +439,7 @@ template&lt;bool o&gt;
 void stitch_from(const hedge_id base_begin) 
 {
     // Return if first edge in triangulation
-    if (onext(base_begin) == base_begin)
+    if (onext&lt;o&gt;(base_begin) == base_begin)
     {
         return;
     }
@@ -564,18 +568,40 @@ void stitch_from(const hedge_id base_begin)
             Somewhat conversely, this means that the new triangulation after each iteration can't contain points that haven't yet been added.
             By always adding the closest point to the cluster, it is trivial to prove that the next point will always be outside the convex hull of the previous set.
         </p>
+        <div class="center">
+            <img src="nonmanifold.png" width="110%" style="margin: -60px;"><br>
+            <i>An invalid "nonmanifold" <tt>base</tt> edge.</i>
+        </div>
+        <p>
+            In 3D, things become messier. 
+            It's possible that the initial edge from the the cluster to the next closest point doesn't connect to the cluster's boundary,
+            as in the image above.
+            In this case, the algorithm won't work; it's also ambiguous how the surface <i>should</i> look.
+            Fortunately, this is a rare case if the points are sampled reasonably from a manifold surface.
+        </p>
+        <div class="center">
+            <img src="full_stitch.png" width="130%" style="margin: -40px -100px;"><br>
+            <i>A case where <tt>stitch_from</tt> never reaches a fold and changes the topology of the mesh.</i>
+        </div>
+        <p>
+            It's also possible in 3D for <tt>stitch_from</tt> to never reach a fold, iterating all the way around the cluster boundary.
+            This causes a change in the topology in the reconstructed mesh, which may or may not be desired.
+            Importantly, this also causes the boundary to dissapear, so any points that haven't been added yet will yield the previous invalid case
+            when we attempt to add them.
+            For now my algorithm ignores this case, assuming the surface is reasonably flat.
+        </p>
         <h2>Conclusion and future work</h2>
         <p>
             In this post, I introduced an algorithm for generating a Delaunay triangulation given a point set's Euclidean distance matrix.
-            Unlike previous works, this algorithm generalizes to 3D point sets by using a more general formulation.
+            Unlike previous works, this algorithm generalizes to 3D point sets with the help of a coordinate-free formulation.
             Previous works in this space typically focus on solving the related problem of finding a 
             <a href="https://en.wikipedia.org/wiki/Voronoi_diagram">Vornoi diagram</a> and then taking its dual; my method solves the primal problem directly.
             However, there's still many things left to figure out.
         </p>
         <p>
             Currently, this algorithm only works for surfaces that are topological disks.
-            It would be nice to generalize this algorithm to reconstruct shapes of different topology, 
-            then prove what properties the point set needs such that the reconstructed surface is homeomorphic to the input shape.
+            In the next post, I'll introduce a simple change to this algorithm to reasonably handle reconstructing shapes of different topology.
+            I'll also take the time to formalize the correctness of this new algorithm, since I was pretty fast and loose with things in this article.
         </p>
         <p>
             It can also be useful to generate Delaunay triangulations under Hessian (or in 3D, shape operator)-based metrics, such as 
@@ -601,6 +627,7 @@ void stitch_from(const hedge_id base_begin)
             <math><msub><mrow><mi>d</mi><mi>p</mi></mrow><mrow><mi>i</mi><mi>j</mi></mrow></msub></math> under the latter metric can be calculated 
             conveniently using the per-point gradient <math><msub><mrow><mo>(</mo><mo>&nabla;</mo><mi>f</mi><mo>)</mo></mrow><mi>i</mi></msub><mspace width="3px"></mspace></math>:
         </p>
+        <pre class="equation">
         <math display="block" style="padding-bottom: 10px;">
             <msubsup>
                 <mrow>
@@ -658,6 +685,7 @@ void stitch_from(const hedge_id base_begin)
             </msubsup>
             <mspace width="3px"></mspace><ms>.</ms>
         </math>
+        </pre>
         <p>
             It still remains to be shown whether this is a viable approximation for constructing anisotropic Delaunay triangulations, 
             or whether the point samples need to have certain properties for this approximation to hold.
@@ -669,7 +697,7 @@ void stitch_from(const hedge_id base_begin)
             is the number of edges in the EDM. 
             Some of this can improve with a better implementation of Prims' algorithm, 
             but it still can't be as fast as the G&S algorithm because of its incremental nature.
-            In the next post, I plan to introduce an algorithm with runtime 
+            In a later post, I plan to introduce an algorithm with runtime 
             <math><mi>O</mi><mo>(</mo><mo>|</mo><mi>V</mi><mo>|</mo><ms>log</ms><mo>(</mo><mo>|</mo><mi>V</mi><mo>|</mo><mo>)</mo><mo>)</mo></math>,
             with a catch &mdash; we need a bit of help from the embedding.
         </p>

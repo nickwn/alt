@@ -25,11 +25,11 @@
      inkscape:document-units="mm"
      inkscape:zoom="0.57739746"
      inkscape:cx="297.02244"
-     inkscape:cy="426.04968"
+     inkscape:cy="426.04967"
      inkscape:window-width="1584"
      inkscape:window-height="773"
      inkscape:window-x="50"
-     inkscape:window-y="116"
+     inkscape:window-y="88"
      inkscape:window-maximized="0"
      inkscape:current-layer="layer1" />
   <defs
@@ -39,19 +39,27 @@
      inkscape:groupmode="layer"
      id="layer1">
     <path
-       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.805864;stroke-dasharray:none;stroke-opacity:1"
-       d="M 143.32342,9.7872403 197.92404,14.42481 174.64471,59.64113 116.65801,96.74171 89.992597,133.06935 51.052599,143.11742 4.4939296,134.22875 23.11741,88.2395 58.248029,51.91186 102.41327,36.90341 Z"
+       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.730757;stroke-dasharray:none;stroke-opacity:1"
+       d="m 145.77575,7.915696 49.45808,4.209912 -21.08677,41.046653 -52.52525,33.679315 -24.153944,32.977654 -35.27245,9.12148 -42.17356,-8.06899 L 36.891292,79.133405 68.713148,46.155753 108.7187,32.531322 Z"
        id="path4"
        sodipodi:nodetypes="ccccccccccc" />
     <path
-       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.805864;stroke-dasharray:none;stroke-opacity:1"
-       d="m 143.34962,10.2175 30.62311,48.78818 -71.3325,-21.73973 13.64471,58.81637 -57.587861,-43.37564 30.848258,79.72518 -65.714427,-43.236 26.898799,53.48928"
+       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.730757;stroke-dasharray:none;stroke-opacity:1"
+       d="M 145.79948,8.306279 173.53837,52.59541 108.92429,32.86043 121.28388,86.252996 69.119904,46.877278 97.062731,119.25053 37.537591,80.001573 61.902937,128.55829"
        id="path5"
        sodipodi:nodetypes="cccccccc" />
     <path
-       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.805864;stroke-dasharray:3.22346, 1.61173;stroke-dashoffset:0;stroke-opacity:1"
-       d="M 197.193,15.05093 4.7837896,134.21824"
+       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.730757;stroke-dasharray:2.92303, 1.46152;stroke-dashoffset:0;stroke-opacity:1"
+       d="M 194.57164,12.69399 20.284416,120.87218"
        id="path6"
        sodipodi:nodetypes="cc" />
+    <path
+       style="fill:#333333;stroke:#000000;stroke-width:1;stroke-dasharray:none"
+       d="M 14.663498,47.656368 V 141.5944"
+       id="path1" />
+    <path
+       style="fill:#333333;stroke:#000000;stroke-width:1;stroke-dasharray:none"
+       d="M 6.4152803,135.17912 144.80204,134.26265"
+       id="path2" />
   </g>
 </svg>

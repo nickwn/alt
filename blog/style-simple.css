@@ -42,6 +42,14 @@ pre {
     border-radius: 5px;
 }
 
+.equation {
+    all: unset;
+    max-width: 100%;
+    overflow: auto;
+    display: block;
+    word-wrap: break-word;
+}
+
 .center {
     display: block;
     align-items: center;

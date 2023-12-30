@@ -10,12 +10,12 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
     </head>
     <body>
-        <h1>Intrinsic Geometry Processing and Geodesic&nbsp;Paths</h1>
+        <h1>Distance Geometry Processing and Geodesic&nbsp;Paths</h1>
         <p>
             As the first post in a short series of posts I plan to write on 
-            <a href="https://www.cs.cmu.edu/~kmcrane/Projects/NavigatingIntrinsicTriangulations/index.html">intrinsic</a> geometry processing, 
+            <a href="https://en.wikipedia.org/wiki/Distance_geometry">distance</a> geometry processing, 
             I wanted to write up a slightly interesting way to think about geodesic paths on triangle meshes in a completely coordinate-free way.
-            Usually it's safe to assume that a mesh is embedded in a 3D coordinate system; however, intrinsic geometry processing algorithms 
+            Usually it's safe to assume that a mesh is embedded in a 3D coordinate system; however, distance geometry processing algorithms 
             attempt to do their calculations using only the edge lengths &mdash; or 
             <i>discrete metric</i> &mdash; of the given mesh. If the need for these algorithms seems esoteric to you, then try adapting 
             <a href="https://www.cs.princeton.edu/courses/archive/fall05/cos528/handouts/A%20Simple%20and%20fast.pdf">this algorithm</a> for 
@@ -38,9 +38,10 @@
             <a href="https://en.wikipedia.org/wiki/Constrained_Delaunay_triangulation">constrained Delaunay triangulation</a>).
         </p>
         <p>
-            I could get into the joys of polygon triangulation in another day, but hopefully from this example it's easy to understand how
-            a coordinate-free approach might not only generalize to multiple dimensions and be easier to implement, but also possibly reveal some deeper 
-            properties of the result. 
+            I could get into the joys of polygon triangulation in another day, but hopefully from this example it's easy to understand why 
+            it might be useful for there to be an approach that works independent of the embedding's dimension.
+            I hope to show that a coordinate-free perspective not only nicely generalizes to multiple dimensions (and not to mention, can be easier to implement), 
+            but also possibly reveals some deeper properties of the result. 
             They can also be useful when adapting geometric algorithms to use metrics that aren't derived directly from the coordinates of an embedding 
             &mdash; more on this later.
         </p>
@@ -49,8 +50,7 @@
         </p>
         <h2>Computing geodesic lengths</h2>
         <p>
-            I'll assume the you, the reader, already have an understanding of what a geodesic path is, because I can't explain everything. 
-            In simplified terms it's a straight path along the surface of a triangle mesh connecting two points.
+            In simplified terms, a geodesic path is a straight path along the surface of a triangle mesh connecting two points.
             Let's say we have some cool algorithm that gives us the strip of triangles a geodesic path crosses as it is traced between two points on a mesh;
             perhaps it is computed by <a href="https://nmwsharp.com/research/flip-geodesics/">this algorithm</a> using 
             <a href="https://markjgillespie.com/Research/integer-coordinates/index.html">this data structure</a>. 
@@ -60,7 +60,10 @@
             and crossings using the 2D coordinates of the triangles. 
             I propose a different way to compute these quantities, using only the edge lengths of the triangles in the strip.
         </p>
-        <div class="center"><img src="geodesic_strip.svg" width="60%" class="invertible"></div>
+        <div class="center">
+            <img src="strip_3d.png" width="50%" style="margin: -20px;"><img src="geodesic_strip.svg" width="50%" class="invertible"><br>
+            <i>A strip of triangles in 3D "laid out" on an arbitrarily chosen 2D grid.</i>
+        </div>
         <p>
             The core of my method relies on 
             <a href="https://www.awesomemath.org/wp-pdf-files/math-reflections/mr-2022-04/mr_4_2022_geometry_paper.pdf">this nifty equation</a> 
@@ -68,6 +71,7 @@
             (<math><mi>a</mi><mo>,</mo><mi>b</mi><mo>,</mo><mi>c</mi><mo>,</mo><mi>d</mi></math>) and shared edge length (<math><mi>e</mi></math>):
         </p>
         <div class="center"><img src="quadrilateral.svg" width="30%" class="invertible"></div>
+        <pre class="equation">
         <math display="block">
             <mrow>
                 <mn>2</mn><msup><mi>f</mi><mn>2</mn></msup>
@@ -132,6 +136,7 @@
                 </mfrac>
             </mrow>
         </math>
+        </pre>
         <p>
             It gets a little chunky towards the end, but hopefully you'll learn to love it. 
             The paper says that this equation works for convex quadrilaterals, but the specific property it expects is bit more subtle:
@@ -144,7 +149,7 @@
             </p>
             <p>
                 We wouldn't have this problem if we were using 2D coordinates, but if we were in 3D it would be harder to define whether a triangle is "flipped".
-                This difference is at the core of many issues that appear when porting 2D geometric algorithms to 3D, and working from the intrinsic
+                This difference is at the core of many issues that appear when porting 2D geometric algorithms to 3D, and working from a distance geometry
                 perspective forces us to address these from the start.
             </p>
             <p>
@@ -309,8 +314,8 @@ double geodesic_d2(
             I trust you can figure it out.
         </p>
         <p>
-            In the next post, I hope to introduce a new fully intrinsic formulation for Delaunay triangulation, including a 
-            coordinate-free point-in-circumcircle geometric predicate.
+            In the next post, I hope to introduce a new fully coordinate-free formulation for Delaunay triangulation, including a 
+            coordinate-free point-in-circumcircle geometric predicate and more.
         </p>
     </body>
 </html>
