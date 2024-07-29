@@ -10,43 +10,12 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
     </head>
     <body>
-        <h1>Distance Geometry Processing and Geodesic&nbsp;Paths</h1>
+        <h1>Geodesic Quantities from Discrete Metric</h1>
         <p>
             As the first post in a short series of posts I plan to write on 
-            <a href="https://en.wikipedia.org/wiki/Distance_geometry">distance</a> geometry processing, 
+            <a href="distance.html">distance</a> geometry processing, 
             I wanted to write up a slightly interesting way to think about geodesic paths on triangle meshes in a completely coordinate-free way.
-            Usually it's safe to assume that a mesh is embedded in a 3D coordinate system; however, distance geometry processing algorithms 
-            attempt to do their calculations using only the edge lengths &mdash; or 
-            <i>discrete metric</i> &mdash; of the given mesh. If the need for these algorithms seems esoteric to you, then try adapting 
-            <a href="https://www.cs.princeton.edu/courses/archive/fall05/cos528/handouts/A%20Simple%20and%20fast.pdf">this algorithm</a> for 
-            triangulating 2D polygons to work in 3D and come back to this article when you've finished. 
-        </p>
-        <p>
-            If its been 3 months and you're crying and shivering, your job lost and engagement called off
-            because you've spent every waking hour thinking about this problem, then hopefully you'll be relieved to hear this: 
-            unlike in 2D, not all 3D polygons are triangulatable, and deciding whether a 3D polygon is triangulatable is actually NP-complete!
-            Futhermore, the problem can also be ambiguous since valid triangulations can have significantly different visual properties.
-        </p>
-        <div class="center">
-            <img src="polys.png" width="80%" class="invertible"><br>
-            <i>Both of the triangulations on the right are valid for the polygon on the left.</i>
-        </div>
-        <p>
-            To narrow the search, it can be useful to optimize for some heuristic to get the most "correct" triangulation; 
-            for example, minimizing the area or maximizing 
-            the minimum triangle angle (to obtain a 
-            <a href="https://en.wikipedia.org/wiki/Constrained_Delaunay_triangulation">constrained Delaunay triangulation</a>).
-        </p>
-        <p>
-            I could get into the joys of polygon triangulation in another day, but hopefully from this example it's easy to understand why 
-            it might be useful for there to be an approach that works independent of the embedding's dimension.
-            I hope to show that a coordinate-free perspective not only nicely generalizes to multiple dimensions (and not to mention, can be easier to implement), 
-            but also possibly reveals some deeper properties of the result. 
-            They can also be useful when adapting geometric algorithms to use metrics that aren't derived directly from the coordinates of an embedding 
-            &mdash; more on this later.
-        </p>
-        <p>
-            I wanted to start this series with a simpler algorithm, but hopefully you can still get a taste for how elegant these algorithms can be. 
+            This algorithm is somewhat simple, but hopefully you can still get a taste for how elegant these algorithms can be. 
         </p>
         <h2>Computing geodesic lengths</h2>
         <p>
@@ -228,7 +197,7 @@ void strip_d2s(
     const intrinsic_mesh& im,
     std::span&lt;const hedge_id&gt; crossings, 
     std::span&lt;const strip_edge&gt; strip_edges,
-    std::span&lt;const double&gt; d2s_out
+    std::span&lt;double&gt; d2s_out
 ) {
     d2s[0] = im.d2(im.lnext(crossings.front()));
     d2s[1] = im.d2(im.lprev(crossings.front()));

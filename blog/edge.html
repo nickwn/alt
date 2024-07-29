@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Edge Insertion</title>
+        <link rel="icon" type="image/png" href="favicon.ico">
+        <link rel="stylesheet" type="text/css" href="styles/code-style.min.css">
+        <link rel="stylesheet" type="text/css" href="style-simple.css">
+        <script src="highlight.min.js"></script>
+        <script>hljs.highlightAll();</script>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body>
+        <h1>Constrained Delaunay Edge Insertion</h1>
+        <p>
+            In this post, we'll take a short break from distance geometry processing to focus on a new algorithm for adding edges to Delaunay triangulations.
+            Specifically, this algorithm inserts a new boundary edge into a Delaunay triangluation in which the boundary edges have been <a href="https://en.wikipedia.org/wiki/Constrained_Delaunay_triangulation">constrained</a> &mdash; 
+            that is, a triangulation that satisfies the Delaunay property as long as the triangles' circumcircles are "chopped off" at the boundary of the triangulation.
+            We assume each new boundary edge forms at least one new triangle in the triangulation. Boundary edges that become interior lose their constraints.
+        </p>
+        <div class="center" style="margin-left: -70px; margin-right: -70px;">
+            <img src="unconstrained.svg" width="40%" class="invertible">
+            <img src="constrained.svg" width="40%" class="invertible"><br>
+        </div>
+        <div class="center">
+            <i>
+                The triangulation on the left is not Delaunay, but it satisfies a weaker boundary-constrained Delaunay criteria.
+            </i>
+        </div>
+        <p>
+            This algorithm might seem a little esoteric right now, but I promise it will become useful for a few different distance geometry-related algorithms down the road, which I plan to cover in future blog posts.
+        </p>
+        <p>
+            For now, it's interesting to note that if our boundary-constrained Delaunay triangulation is convex, then the triangulation is also just a normal unconstrained Delaunay triangulation.
+            The algorithm described in this post is pretty much a modified version of the <a href="https://dl.acm.org/doi/pdf/10.1145/282918.282923">G&S</a> triangulation stitching procedure, so I'll spare a lot of the details and proofs.
+            To show this, I'll use the same "rising bubble" visual that G&S use.
+        </p>
+        <h2>Algorithm overview</h2>
+        <p>
+            Imagine a circle constrained to pass through the endpoints of the newly added edge. 
+            We wish to find the first point touched by the circle as it moves into the interior of the triangulation.
+        </p>
+        <div class="center">
+            <img src="rising.svg" width="70%" class="invertible">
+        </div>
+        <p>
+            Clearly, the triangle formed by this point and the new edge cannot have any other points contained in its (constrained) circumcircle.
+            Once we find this triangle, we can continue applying the same procedure to push the circle further into the interior to find the next neighboring triangles.
+            The recursion stops once we hit an edge that already existed in the original triangulation (and is therefore already Delaunay).
+        </p>
+        <div class="center">
+            <img src="edge_vars.svg" width="70%" class="invertible">
+        </div>
+        <p>
+            Let <i>basel</i> be the newly inserted edge, and let <i>lcand</i> and <i>rcand</i> be the candidates for the edge forming the next triangle on the left and right side, respectively.
+            We proceed exactly as the G&S algorithm does: we delete <i>lcand</i>/<i>rcand</i> if the destination of the next counterclockwise (resp. clockwise) edge is inside the triangle formed by <i>base</i> and the current <i>lcand</i> (resp. <i>rcand</i>).
+            In the above example, we delete <i>lcand</i>:
+        </p>
+        <div class="center">
+            <img src="edge_vars2.svg" width="70%" class="invertible">
+        </div>
+        <p>
+            And connect the next edge as usual, repeating the process with a new <i>basel</i>:
+        </p>
+        <div class="center">
+            <img src="edge_vars3.svg" width="70%" class="invertible">
+        </div>
+        <p>
+            When we reach a point where nothing left needs to be re-triangulated (<i>lcand</i> and <i>rcand</i> form a triangle with <i>basel</i> and both don't need to be deleted), we can terminate the procedure.
+            The code itself is also pretty similar to G&S, so I leave it as an exercise to the reader.
+        </p>
+    </body>
+</html>

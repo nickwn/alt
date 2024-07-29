@@ -140,7 +140,7 @@ img {
 }
 
 .stuff {
-    font-family: back-issues, sans-serif;
+    font-weight: 500;
     display: grid;
     grid-auto-flow: row;
     grid-template-columns: auto auto auto;
