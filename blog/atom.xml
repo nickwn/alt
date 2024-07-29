@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+    <title>Nick's Web Log</title>
+    <link href="http://nickwn.github.io/alt/blog"/>
+    <link href="http://nickwn.github.io/alt/blog/atom.xml" rel="self" />
+    <updated>2025-9-7T23:00:00Z</updated>
+    <entry>
+        <title>Even More Delaunay Triangulation</title>
+        <link href="http://nickwn.github.io/alt/blog/more_delaunay.html"/>
+        <title>Constrained Delaunay Edge Insertion</title>
+        <link href="http://nickwn.github.io/alt/blog/edge.html"/>
+        <title>Coordinate-free Delaunay Triangulation</title>
+        <link href="http://nickwn.github.io/alt/blog/delaunay.html"/>
+        <title>Geodesic Quantities from Discrete Metric</title>
+        <link href="http://nickwn.github.io/alt/blog/geodesic.html"/>
+        <title>Distance Geometry Processing</title>
+        <link href="http://nickwn.github.io/alt/blog/distance.html"/>
+    </entry>
+</feed>

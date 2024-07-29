@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Even More Delaunay Triangulation</title>
+        <link rel="icon" type="image/png" href="favicon.ico">
+        <link rel="stylesheet" type="text/css" href="styles/code-style.min.css">
+        <link rel="stylesheet" type="text/css" href="style-simple.css">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body>
+        <h1>Fixed Mistakes and Even More Delaunay Triangulation</h1>
+        <p>
+            I made an update to my Delaunay triangulation post recently, as I realized &mdash; rather embarassingly &mdash; that both predicates I derived originally were wrong.
+            Although the original post has been updated (it was still in draft anyways), I wanted to write a quick post to to note that these predicates have been fixed and to explore some further use cases for the predicates that weren't considered in the original post.
+        </p>
+        <h2>Fixed Mistakes</h2>
+        <p>
+            To start regaining the trust of my two readers, <a href="https://www.shadertoy.com/view/WfScDw">here</a>'s a shadertoy I made proving the new predicates work.
+            Although you, the reader, may forgive me I may never forgive myself.
+        </p>
+        <iframe width="640" height="360" frameborder="0" src="https://www.shadertoy.com/embed/WfScDw?gui=true&t=10&paused=true&muted=false" allowfullscreen></iframe>
+        <p>    
+            I want to try to implement more of these algorithms before writing them up, but at the same time for several reasons it would be difficult to completely implement and test these things and that's not really my point with this blog.
+            So what I mean to say is, take all these posts with a grain of salt.
+        </p>
+        <p>
+            With that said, here's another possibly shit algorithm.
+        </p>
+        <h2>More Delaunay Triangulation</h2>
+        <p>
+            My main point in this post is to argue that an existing popular Delaunay triangulation algorithm (the lifting method) can be modified to use coordinate-free formulae to yield yet another distance-based Delaunay triangulation algorithm.
+            First I'll give a quick overview of the lifting method, similar to most descriptions of it you can find on the internet.
+            Then I'll provide a differing account of the algorithm's events &mdash; one that reveals how we can substitute its coordinate-based formulae with coordinate-free alternatives.
+        </p>
+        <div class="digression">
+            <h2>The Lifting Method</h2>
+            <p>
+                The intuition for the lifting method comes from the fact that the coordinate-based incircle predicate looks a lot like the formula for the volume of a tetrahedron.
+                When considering three points forming a triangle (<math><mi style="font-weight: bold">A</mi></math>, <math><mi style="font-weight: bold">B</mi></math>, and <math><mi style="font-weight: bold">C</mi></math>) and a fourth query point (<math><mi style="font-weight: bold">v</mi></math>), the formula for the incircle predicate is
+            </p>
+            <math display="block">
+                <mtext>det</mtext>
+                <mo>[</mo>
+                    <mtable>
+                        <mtr>
+                            <mtd><msup><mrow><mo>|</mo><mi style="font-weight: bold">v</mi><mo>|</mo></mrow><mn>2</mn></msup></mtd>
+                            <mtd><msub><mi>v</mi><mi>x</mi></msub></mtd>
+                            <mtd><msub><mi>v</mi><mi>y</mi></msub></mtd>
+                            <mtd><mo>1</mo></mtd>
+                        </mtr>
+                        <mtr>
+                            <mtd><msup><mrow><mo>|</mo><mi style="font-weight: bold">A</mi><mo>|</mo></mrow><mn>2</mn></msup></mtd>
+                            <mtd><msub><mi>A</mi><mi>x</mi></msub></mtd>
+                            <mtd><msub><mi>A</mi><mi>y</mi></msub></mtd>
+                            <mtd><mo>1</mo></mtd>
+                        </mtr>
+                        <mtr>
+                            <mtd><msup><mrow><mo>|</mo><mi style="font-weight: bold">B</mi><mo>|</mo></mrow><mn>2</mn></msup></mtd>
+                            <mtd><msub><mi>B</mi><mi>x</mi></msub></mtd>
+                            <mtd><msub><mi>B</mi><mi>y</mi></msub></mtd>
+                            <mtd><mo>1</mo></mtd>
+                        </mtr>
+                        <mtr>
+                            <mtd><msup><mrow><mo>|</mo><mi style="font-weight: bold">C</mi><mo>|</mo></mrow><mn>2</mn></msup></mtd>
+                            <mtd><msub><mi>C</mi><mi>x</mi></msub></mtd>
+                            <mtd><msub><mi>C</mi><mi>y</mi></msub></mtd>
+                            <mtd><mo>1</mo></mtd>
+                        </mtr>
+                    </mtable>
+                <mo>]</mo><mo>&lt;</mo><mn>0</mn><mtext>,</mtext>
+            </math>
+            <p>
+                while the formula for the volume of a tetrahedron in 3D formed by the same four points is
+            </p>
+            <math display="block">
+                <mn>6</mn><mi>V</mi><mo>=</mo>
+                <mtext>det</mtext>
+                <mo>[</mo>
+                    <mtable>
+                        <mtr>
+                            <mtd><msub><mi>v</mi><mi>x</mi></msub></mtd>
+                            <mtd><msub><mi>v</mi><mi>y</mi></msub></mtd>
+                            <mtd><msub><mi>v</mi><mi>z</mi></msub></mtd>
+                            <mtd><mo>1</mo></mtd>
+                        </mtr>
+                        <mtr>
+                            <mtd><msub><mi>A</mi><mi>x</mi></msub></mtd>
+                            <mtd><msub><mi>A</mi><mi>y</mi></msub></mtd>
+                            <mtd><msub><mi>A</mi><mi>z</mi></msub></mtd>
+                            <mtd><mo>1</mo></mtd>
+                        </mtr>
+                        <mtr>
+                            <mtd><msub><mi>B</mi><mi>x</mi></msub></mtd>
+                            <mtd><msub><mi>B</mi><mi>y</mi></msub></mtd>
+                            <mtd><msub><mi>B</mi><mi>z</mi></msub></mtd>
+                            <mtd><mo>1</mo></mtd>
+                        </mtr>
+                        <mtr>
+                            <mtd><msub><mi>C</mi><mi>x</mi></msub></mtd>
+                            <mtd><msub><mi>C</mi><mi>y</mi></msub></mtd>
+                            <mtd><msub><mi>C</mi><mi>z</mi></msub></mtd>
+                            <mtd><mo>1</mo></mtd>
+                        </mtr>
+                    </mtable>
+                <mo>]</mo><mtext>.</mtext>
+            </math>
+            <p>
+                Effectively, the incircle predicate is the same as mapping the 2D points to 3D using the transform
+                <math><mo>(</mo>
+                    <msub><mi>v</mi><mi>x</mi></msub><mo>,</mo>
+                    <msub><mi>v</mi><mi>y</mi></msub>
+                    <mo>)</mo><mo>&rarr;</mo>
+                    <mo>(</mo>
+                        <msub><mi>v</mi><mi>x</mi></msub><mo>,</mo>
+                        <msub><mi>v</mi><mi>y</mi></msub><mo>,</mo>
+                        <msup><msub><mi>v</mi><mi>x</mi></msub><mn>2</mn></msup><mo>+</mo><msup><msub><mi>v</mi><mi>y</mi></msub><mn>2</mn></msup>
+                    <mo>)</mo>
+                </math>
+                and taking the (signed) volume of the resulting tetrahedron.
+                The problem of Delaunay triangulation then becomes the problem of finding a triangulation such that all tetrahedrons formed by neighboring triangle pairs in the lifted space have positive volumes,
+                which is the same as finding the convex hull of the lifted triangulation.
+            </p>
+            <div class="center">
+                <img src="lifting.png" width="50%">
+            </div>
+            <p>
+                Using this insight, we can then apply fast convex hull algorithms like <a href="https://en.wikipedia.org/wiki/Quickhull">quickhull</a> (or its <a href="https://dpd.cs.princeton.edu/Papers/BarberDobkinHuhdanpaa.pdf">N-dimensional variant</a>) to find the Delaunay triangulation.
+                Cool, right?
+            </p>
+            <p>
+                When determing the next point to add to an existing point set hull, quickhull always uses the point furthest from the half-plane of a facet on the hull. 
+                Typically, implementations also re-use the signed tetrahedron volume formula for this purpose.
+            </p>
+        </div>
+        <p>
+            Now that we have an intuition for the algorithm, I can start to explain another perspective of what's going on. 
+            Like before, we'll start by taking a look at the incircle predicate when it's set to 0.
+            A neat observation is that after doing cofactor expansion on the determinant, the predicate can be re-written in the form for the equation of a circle in 2D:
+        </p>
+        <math display="block" style="padding-bottom: 30px;">
+            <mo>-</mo><msup><mrow><mo>|</mo><mi style="font-weight: bold">v</mi><mo>-</mo><mfrac><mi style="font-weight: bold">S</mi><mi>a</mi></mfrac><mo>|</mo></mrow><mn>2</mn></msup><mo>=</mo>
+            <mfrac><mi>b</mi><mi>a</mi></mfrac><mo>+</mo>
+            <mfrac><msup><mrow><mo>|</mo><mi style="font-weight: bold">S</mi><mo>|</mo></mrow><mn>2</mn></msup><msup><mi>a</mi><mn>2</mn></msup></mfrac>
+            <mtext>, where</mtext>
+        </math>
+        <math display="block" style="padding-bottom: 30px;">
+            <msub>><mi>S</mi><mi>x</mi></msub><mo>=</mo>
+            <mfrac><mn>1</mn><mn>2</mn></mfrac><mspace width="5px" />
+            <mtext>det</mtext>
+            <mo>[</mo>
+                <mtable>
+                    <mtr>
+                        <mtd><msup><mrow><mo>|</mo><mi style="font-weight: bold">A</mi><mo>|</mo></mrow><mn>2</mn></msup></mtd>
+                        <mtd><msub><mi>A</mi><mi>y</mi></msub></mtd>
+                        <mtd><mo>1</mo></mtd>
+                    </mtr>
+                    <mtr>
+                        <mtd><msup><mrow><mo>|</mo><mi style="font-weight: bold">B</mi><mo>|</mo></mrow><mn>2</mn></msup></mtd>
+                        <mtd><msub><mi>B</mi><mi>y</mi></msub></mtd>
+                        <mtd><mo>1</mo></mtd>
+                    </mtr>
+                    <mtr>
+                        <mtd><msup><mrow><mo>|</mo><mi style="font-weight: bold">C</mi><mo>|</mo></mrow><mn>2</mn></msup></mtd>
+                        <mtd><msub><mi>C</mi><mi>y</mi></msub></mtd>
+                        <mtd><mo>1</mo></mtd>
+                    </mtr>
+                </mtable>
+            <mo>]</mo><mtext>,</mtext><mspace width="5px" />
+            <msub>><mi>S</mi><mi>x</mi></msub><mo>=</mo>
+            <mfrac><mn>1</mn><mn>2</mn></mfrac><mspace width="5px" />
+            <mtext>det</mtext>
+            <mo>[</mo>
+                <mtable>
+                    <mtr>
+                        <mtd><msub><mi>A</mi><mi>x</mi></msub></mtd>
+                        <mtd><msup><mrow><mo>|</mo><mi style="font-weight: bold">A</mi><mo>|</mo></mrow><mn>2</mn></msup></mtd>
+                        <mtd><mo>1</mo></mtd>
+                    </mtr>
+                    <mtr>
+                        <mtd><msub><mi>B</mi><mi>x</mi></msub></mtd>
+                        <mtd><msup><mrow><mo>|</mo><mi style="font-weight: bold">B</mi><mo>|</mo></mrow><mn>2</mn></msup></mtd>
+                        <mtd><mo>1</mo></mtd>
+                    </mtr>
+                    <mtr>
+                        <mtd><msub><mi>C</mi><mi>x</mi></msub></mtd>
+                        <mtd><msup><mrow><mo>|</mo><mi style="font-weight: bold">C</mi><mo>|</mo></mrow><mn>2</mn></msup></mtd>
+                        <mtd><mo>1</mo></mtd>
+                    </mtr>
+                </mtable>
+            <mo>]</mo><mtext>,</mtext>
+        </math>
+        <math display="block">
+            <mi>a</mi><mo>=</mo>
+            <mtext>det</mtext>
+            <mo>[</mo>
+                <mtable>
+                    <mtr>
+                        <mtd><msub><mi>A</mi><mi>x</mi></msub></mtd>
+                        <mtd><msub><mi>A</mi><mi>y</mi></msub></mtd>
+                        <mtd><mo>1</mo></mtd>
+                    </mtr>
+                    <mtr>
+                        <mtd><msub><mi>B</mi><mi>x</mi></msub></mtd>
+                        <mtd><msub><mi>B</mi><mi>y</mi></msub></mtd>
+                        <mtd><mo>1</mo></mtd>
+                    </mtr>
+                    <mtr>
+                        <mtd><msub><mi>C</mi><mi>x</mi></msub></mtd>
+                        <mtd><msub><mi>C</mi><mi>y</mi></msub></mtd>
+                        <mtd><mo>1</mo></mtd>
+                    </mtr>
+                </mtable>
+            <mo>]</mo><mtext>, and</mtext><mspace width="5px" />
+            <mi>b</mi><mo>=</mo>
+            <mtext>det</mtext>
+            <mo>[</mo>
+            <mtable>
+                <mtr>
+                    <mtd><msub><mi>A</mi><mi>x</mi></msub></mtd>
+                    <mtd><msub><mi>A</mi><mi>y</mi></msub></mtd>
+                    <mtd><msup><mrow><mo>|</mo><mi style="font-weight: bold">A</mi><mo>|</mo></mrow><mn>2</mn></msup></mtd>
+                </mtr>
+                <mtr>
+                    <mtd><msub><mi>B</mi><mi>x</mi></msub></mtd>
+                    <mtd><msub><mi>B</mi><mi>y</mi></msub></mtd>
+                    <mtd><msup><mrow><mo>|</mo><mi style="font-weight: bold">B</mi><mo>|</mo></mrow><mn>2</mn></msup></mtd>
+                </mtr>
+                <mtr>
+                    <mtd><msub><mi>C</mi><mi>x</mi></msub></mtd>
+                    <mtd><msub><mi>C</mi><mi>y</mi></msub></mtd>
+                    <mtd><msup><mrow><mo>|</mo><mi style="font-weight: bold">C</mi><mo>|</mo></mrow><mn>2</mn></msup></mtd>
+                </mtr>
+            </mtable>
+            <mo>]</mo><mo>.</mo>
+        </math>
+        <p>
+            To compare, the equation for a circle in 2D is just 
+            <math>
+                <msup><mrow><mo>|</mo>
+                    <mi style="font-weight: bold">v</mi><mo>-</mo><mi style="font-weight: bold">O</mi>
+                <mo>|</mo></mrow><mn>2</mn></msup><mo>=</mo>
+                <msup><mi>r</mi><mn>2</mn></msup>
+            </math>, where <math><mi>O</mi></math> is the origin of the circle and <math><mi>r</mi></math> is the radius.
+            If we subtract the radius squared from both sides we end up with the formula for the power of a point w.r.t the circumcircle, 
+            which we conveniently already have a formula for in terms of the point distances. 
+            Therefore the traditional coordinate-based predicate and our previously-derived coordinate-free one really are just computing the same thing.
+        </p>
+        <p>
+            With this knowledge, let's take a second look at what quickhull is doing:
+            instead of saying it finds the point furthest from a given triangle on the lifted hull's surface, we can alternatively say it finds the point closest to the given triangle's circumcenter;
+            and of course instead of saying a point is "visible" from a triangle on the lifted surface (nonconvex), we can just say that the point is inside the triangle's circumcircle.
+        </p>
+        <p>
+            With this in mind, for completeness here's the N-dimensional lifted quickhull-based DT algorithm &mdash; except I've just re-phrased some of it to make it clearer how the coordinate-free formulae are used:
+        </p>
+        <pre><code>Input = a set S of n points with dimension d
+Assume that there are at least d + 2 points in the input set S of points
+
+<b>function</b> Delaunay(S) <b>is</b>
+    T := a an initial triangulation of of d + 2 points in S
+    In Circle Set := a map from each facet in T to an empty set of points
+
+    <b>for</b> each facet F <b>in</b> T:
+        <b>for</b> each point p <b>in</b> S
+            <b>if</b> p is already assigned to a facet in In Circle Set <b>then</b>
+                <b>continue</b>
+            <b>if</b> p is in F's circumcircle <b>then</b>:
+                insert p into In Circle Set[F]
+    <b>for</b> each facet F <b>in</b> T with a non-empty In Circle Set[F]:
+        Next := the point p in In Circle Set[F] closest to F's circumcircle 
+        I := {F}
+        <b>for</b> all unvisited neighbors N of facets <b>in</b> I:
+            <b>if</b> p is in N's circumcircle <b>then</b>
+                append N to I
+        B := boundary ridges of I
+        
+        <b>for</b> each ridge R <b>in</b> B
+            F' := create a new facet from R and p
+            add F' to T
+        <b>for</b> facet F' <b>in</b> the new facets
+            <b>for</b> each point q <in>in</in> S assigned to a facet of V in In Circle Set
+                <b>if</b> q is already assigned to a facet in In Circle Set outside of V <b>then</b>
+                    <b>continue</b>
+                <b>if</b> q is in (F')'s circumcircle <b>then</b>
+                    insert q into In Circle Set[F']
+        delete the facets in I from T
+    <b>return</b> T
+        </pre></code>
+    </body>
+</html>

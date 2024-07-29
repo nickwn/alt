@@ -29,13 +29,296 @@
             </i>
         </div>
         <p>
-            Before we get in the weeds of the algorithm, we first need the coordinate-free versions of two classic geometric predicates:
-            the point-in-circumcircle (or "incircle") predicate, and (what I'll call) the "isvalid" predicate.
+            Before getting into the weeds of the algorithm, we first need the coordinate-free versions of two classic geometric predicates:
+            the point-in-circumcircle (or "incircle") predicate, and the "orient" predicate.
             Sure, both can be done by using the points' coordinates, but in the spirit of the last article it would be cleaner if we could do this in a single formula involving only the point distances.
         </p>
+        <h2>A coordinate-free orient predicate</h2>
+        <p>
+            The "orient" predicate calculates whether a triangle is flipped or not.
+            Because of the <i>Orientation Problem</i>, we can't know this for a triangle in isolation; 
+            however, we can try to figure out something related: whether a triangle is flipped with respect to another neighboring reference triangle.
+        </p>
+        <p>
+            We do this by calculating the barycentric coordinates (<i>u</i>&nbsp;:&nbsp;<i>v</i>&nbsp;:&nbsp;<i>w</i>)&nbsp;of the query point with respect to the reference triangle.
+            If we assume P is inside the triangle, then the barycentric coordinates can be computed by dividing the area of each subtriangle by the total area of the triangle (where the triangle areas can be computed with Heron's formula). 
+            If <i>P</i> is outside the triangle, however, then the <i>Orientation Problem</i> becomes an issue: some of the sub-triangles would be "flipped", meaning their area should be negative.
+        </p>
+        <p>
+            Instead we take a different approach, exploiting some quirks of the formula for the distance between two points in barycentric coordinates.
+            If we define the displacement vector from point 
+            <math><mi>P</mi><mo>=</mo><mo>(</mo><msub><mi>p</mi><mn>1</mn></msub><mo>,</mo><msub><mi>p</mi><mn>2</mn></msub><mo>,</mo><msub><mi>p</mi><mn>3</mn></msub><mo>)</mo></math> 
+            to point 
+            <math><mi>Q</mi><mo>=</mo><mo>(</mo><msub><mi>q</mi><mn>1</mn></msub><mo>,</mo><msub><mi>q</mi><mn>2</mn></msub><mo>,</mo><msub><mi>q</mi><mn>3</mn></msub><mo>)</mo></math> 
+            in barycentric coordinates by
+        </p>
+        <math display="block">
+            <mover><mrow><mi>P</mi><mi>Q</mi></mrow><mo>&rarr;</mo></mover><mo>=</mo>
+            <mo>(</mo>
+                <msub><mi>p</mi><mn>1</mn></msub><mo>-</mo><msub><mi>q</mi><mn>1</mn></msub><mo>,</mo>
+                <msub><mi>p</mi><mn>2</mn></msub><mo>-</mo><msub><mi>q</mi><mn>2</mn></msub><mo>,</mo>
+                <msub><mi>p</mi><mn>3</mn></msub><mo>-</mo><msub><mi>q</mi><mn>3</mn></msub>
+            <mo>)</mo><mtext>,</mtext>
+        </math>
+        <p>
+            then the distance between the points, or the length of the displacement vector 
+            <math><mover><mrow><mi>P</mi><mi>Q</mi></mrow><mo>&rarr;</mo></mover><mo>=</mo><mo>(</mo><mi>x</mi><mo>,</mo><mi>y</mi><mo>,</mo><mi>z</mi><mo>)</mo></math>
+            can be given by
+        </p>
+        <math display="block">
+            <msup><mi>d</mi><mn>2</mn></msup><mo>=</mo>
+            <mo>|</mo><mover><mrow><mi>P</mi><mi>Q</mi></mrow><mo>&rarr;</mo></mover><mo>|</mo><mo>=</mo>
+            <mfrac><mn>1</mn><mn>2</mn></mfrac><mspace width="5px"/>
+            <mo>[</mo>
+                <msup><mi>x</mi><mn>2</mn></msup>
+                <mo>(</mo>
+                    <msup><mi>b</mi><mn>2</mn></msup><mo>+</mo><msup><mi>c</mi><mn>2</mn></msup><mo>-</mo><msup><mi>a</mi><mn>2</mn></msup>
+                <mo>)</mo><mo>+</mo>
+                <msup><mi>y</mi><mn>2</mn></msup>
+                <mo>(</mo>
+                    <msup><mi>c</mi><mn>2</mn></msup><mo>+</mo><msup><mi>a</mi><mn>2</mn></msup><mo>-</mo><msup><mi>b</mi><mn>2</mn></msup>
+                <mo>)</mo><mo>+</mo>
+                <msup><mi>z</mi><mn>2</mn></msup>
+                <mo>(</mo>
+                    <msup><mi>a</mi><mn>2</mn></msup><mo>+</mo><msup><mi>b</mi><mn>2</mn></msup><mo>-</mo><msup><mi>c</mi><mn>2</mn></msup>
+                <mo>)</mo>
+            <mo>]</mo><mtext>.</mtext>
+        </math>
+        <p>
+            Using this formula, the barycentrics of a point can be found by solving the equation
+        </p>
+        <math display="block">
+            <mo>[</mo>
+                <mtable>
+                    <mtr>
+                        <mtd><mo>-</mo><msup><mi>c</mi><mn>2</mn></msup></mtd>
+                        <mtd><msup><mi>c</mi><mn>2</mn></msup></mtd>
+                        <mtd><msup><mi>b</mi><mn>2</mn></msup><mo>-</mo><msup><mi>a</mi><mn>2</mn></msup></mtd>
+                    </mtr>
+                    <mtr>
+                        <mtd><mo>-</mo><msup><mi>d</mi><mn>2</mn></msup></mtd>
+                        <mtd><msup><mi>c</mi><mn>2</mn></msup><mo>-</mo><msup><mi>a</mi><mn>2</mn></msup></mtd>
+                        <mtd><msup><mi>b</mi><mn>2</mn></msup></mtd>
+                    </mtr>
+                    <mtr>
+                        <mtd><mn>1</mn></mtd>
+                        <mtd><mn>1</mn></mtd>
+                        <mtd><mn>1</mn></mtd>
+                    </mtr>
+                </mtable>
+            <mo>]</mo>
+            <mo>[</mo>
+                <mtable>
+                    <mtr><mtd><mpadded height="1em"><mi>u</mi></mpadded></mtd></mtr>
+                    <mtr><mtd><mpadded height="1em"><mi>v</mi></mpadded></mtd></mtr>
+                    <mtr><mtd><mpadded height="1em"><mi>w</mi></mpadded></mtd></mtr>
+                </mtable>
+            <mo>]</mo><mo>=</mo>
+            <mo>[</mo>
+                <mtable>
+                    <mtr><mtd>
+                        <msup><mi>d</mi><mn>2</mn></msup><mo>-</mo><msup><mi>e</mi><mn>2</mn></msup>
+                    </mtd></mtr>
+                    <mtr><mtd>
+                        <msup><mi>d</mi><mn>2</mn></msup><mo>-</mo><msup><mi>f</mi><mn>2</mn></msup>
+                    </mtd></mtr>
+                    <mtr><mtd>
+                        <mn>1</mn>
+                    </mtd></mtr>
+                </mtable>
+            <mo>]</mo><mtext>,</mtext>
+        </math>
+        <p>
+            where <math><mi>d</mi></math>, <math><mi>e</mi></math>, and <math><mi>f</mi></math> are the distances from the triangle's points to the query point
+        </p>
+        <math display="block">
+            <msup><mi>d</mi><mn>2</mn></msup><mo>=</mo><msup><msub><mi>d</mi><mi>A</mi></msub><mn>2</mn></msup><mtext>,</mtext><mspace width="5px" />
+            <msup><mi>e</mi><mn>2</mn></msup><mo>=</mo><msup><msub><mi>d</mi><mi>B</mi></msub><mn>2</mn></msup><mtext>, and</mtext><mspace width="5px" />
+            <msup><mi>f</mi><mn>2</mn></msup><mo>=</mo><msup><msub><mi>d</mi><mi>C</mi></msub><mn>2</mn></msup>
+        </math>
+        <p>
+            Inverting this matrix and multiplying the result with the right hand side of the above yields
+        </p>
+        <math display="block">
+            <mi>u</mi><mo>=</mo><mi>u</mi><mo>'</mo><mo>/</mo><mtext>det</mtext><mtext>,</mtext><mspace width="5px" />
+            <mi>v</mi><mo>=</mo><mi>v</mi><mo>'</mo><mo>/</mo><mtext>det</mtext><mtext>,</mtext><mspace width="5px" />
+            <mi>w</mi><mo>=</mo><mi>w</mi><mo>'</mo><mo>/</mo><mtext>det</mtext><mtext>,</mtext>
+        </math>
+        <p>
+            where
+        </p>
+        <math display="block" style="padding-bottom: 10px;">
+            <mi>u</mi><mo>'</mo><mo>=</mo>
+            <mo>-</mo><msup><mi>a</mi><mn>4</mn></msup><mo>+</mo>
+            <msup><mi>b</mi><mn>2</mn></msup><msup><mi>a</mi><mn>2</mn></msup><mo>+</mo>
+            <msup><mi>c</mi><mn>2</mn></msup><msup><mi>a</mi><mn>2</mn></msup><mo>-</mo>
+            <mn>2</mn><msup><mi>a</mi><mn>2</mn></msup><msup><mi>d</mi><mn>2</mn></msup><mo>-</mo>
+            <mo>(</mo><msup><mi>c</mi><mn>2</mn></msup><mo>-</mo><msup><mi>a</mi><mn>2</mn></msup><mo>-</mo><msup><mi>b</mi><mn>2</mn></msup><mo>)</mo>
+            <msup><mi>e</mi><mn>2</mn></msup><mo>-</mo>
+            <mo>(</mo><msup><mi>b</mi><mn>2</mn></msup><mo>-</mo><msup><mi>a</mi><mn>2</mn></msup><mo>-</mo><msup><mi>c</mi><mn>2</mn></msup><mo>)</mo>
+            <msup><mi>f</mi><mn>2</mn></msup><mtext>,</mtext>
+        </math>
+        <math display="block" style="padding-bottom: 10px;">
+            <mi>v</mi><mo>'</mo><mo>=</mo>
+            <mo>-</mo><msup><mi>b</mi><mn>4</mn></msup><mo>+</mo>
+            <msup><mi>c</mi><mn>2</mn></msup><msup><mi>b</mi><mn>2</mn></msup><mo>+</mo>
+            <msup><mi>a</mi><mn>2</mn></msup><msup><mi>b</mi><mn>2</mn></msup><mo>-</mo>
+            <mn>2</mn><msup><mi>b</mi><mn>2</mn></msup><msup><mi>e</mi><mn>2</mn></msup><mo>-</mo>
+            <mo>(</mo><msup><mi>a</mi><mn>2</mn></msup><mo>-</mo><msup><mi>b</mi><mn>2</mn></msup><mo>-</mo><msup><mi>c</mi><mn>2</mn></msup><mo>)</mo>
+            <msup><mi>f</mi><mn>2</mn></msup><mo>-</mo>
+            <mo>(</mo><msup><mi>c</mi><mn>2</mn></msup><mo>-</mo><msup><mi>b</mi><mn>2</mn></msup><mo>-</mo><msup><mi>a</mi><mn>2</mn></msup><mo>)</mo>
+            <msup><mi>d</mi><mn>2</mn></msup><mtext>,</mtext>
+        </math>
+        <math display="block">
+            <mi>w</mi><mo>'</mo><mo>=</mo>
+            <mo>-</mo><msup><mi>c</mi><mn>4</mn></msup><mo>+</mo>
+            <msup><mi>a</mi><mn>2</mn></msup><msup><mi>c</mi><mn>2</mn></msup><mo>+</mo>
+            <msup><mi>b</mi><mn>2</mn></msup><msup><mi>c</mi><mn>2</mn></msup><mo>-</mo>
+            <mn>2</mn><msup><mi>c</mi><mn>2</mn></msup><msup><mi>f</mi><mn>2</mn></msup><mo>-</mo>
+            <mo>(</mo><msup><mi>b</mi><mn>2</mn></msup><mo>-</mo><msup><mi>c</mi><mn>2</mn></msup><mo>-</mo><msup><mi>a</mi><mn>2</mn></msup><mo>)</mo>
+            <msup><mi>d</mi><mn>2</mn></msup><mo>-</mo>
+            <mo>(</mo><msup><mi>a</mi><mn>2</mn></msup><mo>-</mo><msup><mi>c</mi><mn>2</mn></msup><mo>-</mo><msup><mi>b</mi><mn>2</mn></msup><mo>)</mo>
+            <msup><mi>e</mi><mn>2</mn></msup><mtext>,</mtext>
+        </math>
+        <p>
+            and <math><mtext>det</mtext></math> is the determinant of the adjugate matrix, defined by
+        </p>
+        <math display="block">
+            <mtext>det</mtext><mo>=</mo>
+            <mn>2</mn><msup><mi>a</mi><mn>2</mn></msup><msup><mi>b</mi><mn>2</mn></msup><mo>+</mo>
+            <mn>2</mn><msup><mi>c</mi><mn>2</mn></msup><msup><mi>b</mi><mn>2</mn></msup><mo>+</mo>
+            <mn>2</mn><msup><mi>a</mi><mn>2</mn></msup><msup><mi>c</mi><mn>2</mn></msup><mo>-</mo>
+            <msup><mi>a</mi><mn>4</mn></msup><mo>-</mo>
+            <msup><mi>b</mi><mn>4</mn></msup><mo>-</mo>
+            <msup><mi>c</mi><mn>4</mn></msup><mtext>.</mtext>
+        </math>
+        <p>
+            Pretty neat, right? 
+            I think that <math><mtext>det</mtext></math> is always <math><mo>></mo><mn>0</mn></math> since I've never seen it negative, although the proof is TBD (and maybe you very well could construct cases where it is negative).
+            So &mdash; very tentatively &mdash; the final predicate for testing the orientation of a query point with respect to the (arbitrarily chosen) edge 
+            <math><mover><mrow><mi>B</mi><mi>C</mi></mrow><mo>&rarr;</mo></mover></math>
+            would be
+        </p>
+        <math display="block" style="padding-bottom: 30px;">
+            <mo>-</mo><msup><mi>c</mi><mn>4</mn></msup><mo>+</mo>
+            <msup><mi>a</mi><mn>2</mn></msup><msup><mi>c</mi><mn>2</mn></msup><mo>+</mo>
+            <msup><mi>b</mi><mn>2</mn></msup><msup><mi>c</mi><mn>2</mn></msup><mo>-</mo>
+            <mn>2</mn><msup><mi>c</mi><mn>2</mn></msup><msup><mi>f</mi><mn>2</mn></msup><mo>-</mo>
+            <mo>(</mo><msup><mi>b</mi><mn>2</mn></msup><mo>-</mo><msup><mi>c</mi><mn>2</mn></msup><mo>-</mo><msup><mi>a</mi><mn>2</mn></msup><mo>)</mo>
+            <msup><mi>d</mi><mn>2</mn></msup><mo>-</mo>
+            <mo>(</mo><msup><mi>a</mi><mn>2</mn></msup><mo>-</mo><msup><mi>c</mi><mn>2</mn></msup><mo>-</mo><msup><mi>b</mi><mn>2</mn></msup><mo>)</mo>
+            <msup><mi>e</mi><mn>2</mn></msup><mo>&lt;</mo><mn>0</mn><mtext>.</mtext>
+        </math>
+        <div class="digression">
+            <h2>An alternate predicate?</h2>
+            <p><i>
+                In a previous version of this blog post, I derived an alternate predicate using a different approach than the one above. 
+                I think something is wrong with it however, since it didn't seem to work when I attempted to implement it.
+                I'll leave it here since I think it's a somewhat interesting result:
+            </i></p>
+            <p>
+                Before designing a coordinate-free formula that can calculate this, we need to understand the problem in 3D.
+                Imagine folding a quadrilateral along one of its diagonals such that two triangles are formed, and consider the area of the tetrahedron formed by their hull.
+            </p>
+            <div class="center">
+                <img src="tetrahedron.svg" width="50%" class="invertible"><br>
+                <i>Imagine the above image is in 3D, with quadrilateral a-b-c-d folded along e and edge length f being free.</i>
+            </div>
+            <p>The volume (squared) of the above tetrahedron can be computed using its <a href="https://en.wikipedia.org/wiki/Cayley–Menger_determinant">Cayley-Menger determinant</a>:</p>
+            <math display="block">
+                <mn>288</mn><msup><mi>V</mi><mn>2</mn></msup><mo>=</mo>
+                <ms>det</ms>
+                <mo>[</mo>
+                <mtable>
+                    <mtr>
+                        <mtd><mn>0</mn></mtd>
+                        <mtd><msup><mi>a</mi><mn>2</mn></msup></mtd>
+                        <mtd><msup><mi>e</mi><mn>2</mn></msup></mtd>
+                        <mtd><msup><mi>d</mi><mn>2</mn></msup></mtd>
+                        <mtd><mn>1</mn></mtd>
+                    </mtr>
+                    <mtr>
+                        <mtd><msup><mi>a</mi><mn>2</mn></msup></mtd>
+                        <mtd><mn>0</mn></mtd>
+                        <mtd><msup><mi>b</mi><mn>2</mn></msup></mtd>
+                        <mtd><msup><mi>f</mi><mn>2</mn></msup></mtd>
+                        <mtd><mn>1</mn></mtd>
+                    </mtr>
+                    <mtr>
+                        <mtd><msup><mi>e</mi><mn>2</mn></msup></mtd>
+                        <mtd><msup><mi>b</mi><mn>2</mn></msup></mtd>
+                        <mtd><mn>0</mn></mtd>
+                        <mtd><msup><mi>c</mi><mn>2</mn></msup></mtd>
+                        <mtd><mn>1</mn></mtd>
+                    </mtr>
+                    <mtr>
+                        <mtd><msup><mi>d</mi><mn>2</mn></msup></mtd>
+                        <mtd><msup><mi>f</mi><mn>2</mn></msup></mtd>
+                        <mtd><msup><mi>c</mi><mn>2</mn></msup></mtd>
+                        <mtd><mn>0</mn></mtd>
+                        <mtd><mn>1</mn></mtd>
+                    </mtr>
+                    <mtr>
+                        <mtd><mn>1</mn></mtd>
+                        <mtd><mn>1</mn></mtd>
+                        <mtd><mn>1</mn></mtd>
+                        <mtd><mn>1</mn></mtd>
+                        <mtd><mn>0</mn></mtd>
+                    </mtr>
+                </mtable>
+                <mo>]</mo>
+                <ms>.</ms>
+            </math>
+            <p>
+                Imagine fixing the edge lengths <i>a</i>, <i>b</i>, <i>c</i>, <i>d</i>, and <i>e</i>, while letting <i>f</i> be free.
+                Let the quadrilateral be unfolded at first, such that the volume of the tetrahedron is zero.
+                As <i>f</i> decreases, the quadrilateral starts to fold and <i>V</i> increases; <i>V</i> reaches a maximum when the two triangles form a right angle.
+                As <i>f</i> continues to decrease, the quadrilateral folds even more and <i>V</i> starts to decrease as well, until <i>V</i> finally reaches zero.
+                It is interesting to note that the determinant is still continuous at this point (and its initial point): 
+                as <i>f</i> decreases further, the lengths form an invalid tetrahedron and the determinant becomes negative.
+            </p>
+            <div class="center">
+                <img src="folding.svg" width="100%" class="invertible"><br>
+                <i>Imagine the above image is in 3D, with the quadrilateral shown at different stages of folding.</i>
+            </div>
+            <p>
+                I'll define a quadrilateral as "folded" if the area is past its maximum; that is, if the determinant's derivative with respect to <i>f</i> is positive.
+                Futhermore, this derivative has a surprisingly simple formula, giving us our final predicate:
+            </p>
+            <pre class="equation">
+            <math display="block">
+                <mtext style="font-weight: bold">orient</mtext>
+                <mo>(</mo>
+                    <mi>a</mi><mo>,</mo><mi>b</mi><mo>,</mo><mi>c</mi><mo>,</mo><mi>d</mi><mo>,</mo><mi>e</mi><mo>,</mo><mi>f</mi>
+                <mo>)</mo>
+                <mo>:=</mo>
+                <mn>4</mn><msup><mi>f</mi><mn>2</mn></msup><mi>e</mi>
+                <mo>(</mo>
+                    <msup><mi>a</mi><mn>2</mn></msup><mo>+</mo>
+                    <msup><mi>b</mi><mn>2</mn></msup><mo>-</mo>
+                    <msup><mi>e</mi><mn>2</mn></msup>
+                <mo>)</mo>
+                <mo>-</mo>
+                <mn>2</mn><mi>e</mi>
+                <mo>(</mo>
+                    <msup><mi>f</mi><mn>2</mn></msup><mo>+</mo>
+                    <msup><mi>a</mi><mn>2</mn></msup><mo>-</mo>
+                    <msup><mi>d</mi><mn>2</mn></msup>
+                <mo>)</mo>
+                <mo>(</mo>
+                    <msup><mi>f</mi><mn>2</mn></msup><mo>+</mo>
+                    <msup><mi>b</mi><mn>2</mn></msup><mo>-</mo>
+                    <msup><mi>c</mi><mn>2</mn></msup>
+                <mo>)</mo>
+                <mo><</mo>
+                <mn>0</mn>
+                <ms>.</ms>
+            </math>
+            </pre>
+        </div>
         <h2>A coordinate-free incircle predicate</h2>
         <p>
-            The core of my formula relies on the concept of the 
+            The core of this predicate relies on the concept of the 
             "<a href="https://en.wikipedia.org/wiki/Power_of_a_point">power of a point</a>"
             <math><mo>&Pi;</mo><mo>&lpar;</mo><mi>P</mi><mo>&rpar;</mo></math> 
             in Euclidean triangle geometry.
@@ -53,7 +336,7 @@
             Clearly, this is negative when <i>P</i> is inside the circle and positive when <i>P</i> is outside.
             In the case when the circle is the circumcircle of a triangle, the power of a point has a 
             <a href="http://users.math.uoc.gr/~pamfilos/eGallery/problems/Barycentrics.pdf">very clean formula</a> 
-            in terms of the point's (normalized) barycentric coordinates (<i>u</i>&nbsp;:&nbsp;<i>v</i>&nbsp;:&nbsp;<i>w</i>)&nbsp;:
+            in terms of the point's barycentric coordinates:
         </p>
         <div class="center">
             <img src="simple_bary.svg" width="35%" class="invertible"><br>
@@ -63,148 +346,15 @@
         </div><br>
         <math display="block">
             <mo>&Pi;</mo><mo>&lpar;</mo><mi>P</mi><mo>&rpar;</mo><mo>:=</mo>
-            <msub><mi>S</mi><mi>A</mi></msub><msup><mi>u</mi><mn>2</mn></msup><mo>+</mo>
-            <msub><mi>S</mi><mi>B</mi></msub><msup><mi>v</mi><mn>2</mn></msup><mo>+</mo>
-            <msub><mi>S</mi><mi>C</mi></msub><msup><mi>w</mi><mn>2</mn></msup>
+            <msup><mi>a</mi><mi>2</mi></msup><mi>v</mi><mi>w</mi><mo>+</mo>
+            <msup><mi>b</mi><mi>2</mi></msup><mi>u</mi><mi>w</mi><mo>+</mo>
+            <msup><mi>c</mi><mi>2</mi></msup><mi>u</mi><mi>v</mi>
             <mtext>.</mtext>
         </math>
         <p>
-            Here we borrow from <a href="https://en.wikipedia.org/wiki/Conway_triangle_notation">Conway's triangle notation</a>,
-            where
-        </p>
-        <pre class="equation">
-        <math display="block">
-            <msub><mi>S</mi><mi>A</mi></msub>
-            <mo>=</mo>
-            <mfrac>
-                <mrow>
-                    <msup><mi>b</mi><mn>2</mn></msup><mo>+</mo>
-                    <msup><mi>c</mi><mn>2</mn></msup><mo>-</mo>
-                    <msup><mi>a</mi><mn>2</mn></msup>
-                </mrow>
-                <mn>2</mn>
-            </mfrac>
-            <mspace width="5px"></mspace>
-            <ms>,</ms>
-            <mspace width="10px"></mspace>
-            <msub><mi>S</mi><mi>B</mi></msub>
-            <mo>=</mo>
-            <mfrac>
-                <mrow>
-                    <msup><mi>c</mi><mn>2</mn></msup><mo>+</mo>
-                    <msup><mi>a</mi><mn>2</mn></msup><mo>-</mo>
-                    <msup><mi>b</mi><mn>2</mn></msup>
-                </mrow>
-                <mn>2</mn>
-            </mfrac>
-            <mspace width="5px"></mspace>
-            <ms>,</ms>
-            <mspace width="10px"></mspace>
-            <ms>and</ms>
-            <mspace width="5px"></mspace>
-            <msub><mi>S</mi><mi>C</mi></msub>
-            <mo>=</mo>
-            <mfrac>
-                <mrow>
-                    <msup><mi>a</mi><mn>2</mn></msup><mo>+</mo>
-                    <msup><mi>b</mi><mn>2</mn></msup><mo>-</mo>
-                    <msup><mi>c</mi><mn>2</mn></msup>
-                </mrow>
-                <mn>2</mn>
-            </mfrac>
-            <mspace width="5px"></mspace>
-            <ms>.</ms>
-        </math>
-        </pre>
-        <p>
-            The only problem that remains is to compute these barycentric coordinates.
-            If we assume P is inside the triangle, then the barycentric coordinates can be computed by dividing the area of each subtriangle by the total area of the triangle. 
-        </p>
-        <p>
-            If <i>P</i> is outside the triangle, however, then the <i>Orientation Problem</i> becomes an issue: some of the sub-triangles would be "flipped", meaning their area should be negative.
-            Luckily, this isn't an issue for us &mdash; take a second look at our formula.
-            Because we square the barycentric coordinates, the sign disappears and this never becomes an issue.
-        </p>
-        <p>
-            After simplifying things a little, our full predicate becomes
-        </p>
-        <div class="center">
-            <img src="outside_bary.svg" width="50%" class="invertible">
-        </div>
-        <pre class="equation">
-        <math display="block" style="padding-bottom: 10px;">
-            <msub><mtext style="font-weight: bold">in_circle</mtext><ms>planar</ms></msub><mo>(</mo>
-            <mi>a</mi><mo>,</mo><mi>b</mi><mo>,</mo><mi>c</mi><mo>,</mo><mi>d</mi><mo>,</mo><mi>e</mi><mo>,</mo><mi>f</mi>
-            <mo>)</mo>
-            <mo>:=</mo>
-            <mo>(</mo>
-                <msup><mi>b</mi><mn>2</mn></msup><mo>+</mo>
-                <msup><mi>c</mi><mn>2</mn></msup><mo>-</mo>
-                <msup><mi>a</mi><mn>2</mn></msup>
-            <mo>)</mo>
-            <mo>(</mo>
-                <mn>4</mn><msup><mi>e</mi><mn>2</mn></msup><msup><mi>f</mi><mn>2</mn></msup><mo>-</mo>
-                <msup>
-                    <mrow>
-                        <mo>(</mo>
-                            <msup><mi>e</mi><mn>2</mn></msup><mo>+</mo><msup><mi>f</mi><mn>2</mn></msup>
-                            <mo>-</mo><msup><mi>a</mi><mn>2</mn></msup>
-                        <mo>)</mo>
-                    </mrow>
-                    <mn>2</mn>
-                </msup>
-            <mo>)</mo>
-        </math>
-        <math display="block" style="padding-bottom: 10px;">
-            <mo>+</mo>
-            <mo>(</mo>
-                <msup><mi>c</mi><mn>2</mn></msup><mo>+</mo>
-                <msup><mi>a</mi><mn>2</mn></msup><mo>-</mo>
-                <msup><mi>b</mi><mn>2</mn></msup>
-            <mo>)</mo>
-            <mo>(</mo>
-                <mn>4</mn><msup><mi>f</mi><mn>2</mn></msup><msup><mi>d</mi><mn>2</mn></msup><mo>-</mo>
-                <msup>
-                    <mrow>
-                        <mo>(</mo>
-                            <msup><mi>f</mi><mn>2</mn></msup><mo>+</mo><msup><mi>d</mi><mn>2</mn></msup>
-                            <mo>-</mo><msup><mi>b</mi><mn>2</mn></msup>
-                        <mo>)</mo>
-                    </mrow>
-                    <mn>2</mn>
-                </msup>
-            <mo>)</mo>
-        </math>
-        <math display="block">
-            <mo>+</mo>
-            <mo>(</mo>
-                <msup><mi>a</mi><mn>2</mn></msup><mo>+</mo>
-                <msup><mi>b</mi><mn>2</mn></msup><mo>-</mo>
-                <msup><mi>c</mi><mn>2</mn></msup>
-            <mo>)</mo>
-            <mo>(</mo>
-                <mn>4</mn><msup><mi>d</mi><mn>2</mn></msup><msup><mi>e</mi><mn>2</mn></msup><mo>-</mo>
-                <msup>
-                    <mrow>
-                        <mo>(</mo>
-                            <msup><mi>d</mi><mn>2</mn></msup><mo>+</mo><msup><mi>e</mi><mn>2</mn></msup>
-                            <mo>-</mo><msup><mi>c</mi><mn>2</mn></msup>
-                        <mo>)</mo>
-                    </mrow>
-                    <mn>2</mn>
-                </msup>
-            <mo>)</mo>
-            <mo><</mo>
-            <mn>0</mn>
-            <mspace width="5px"></mspace>
-            <ms>.</ms>
-        </math>
-        </pre>
-        <p>
-            Pretty clean, right?
+            Computing predicate becomes trivial using the barycentric coordinate formulae from the last section.
         </p>
         <p> 
-            "But hold up!" You say, "I see that <math><msub><ms></ms><ms>planar</ms></msub></math> subscript! 
             How would this generalize this to 3D, where the points can be non-planar?"
         </p>
         <div class="center">
@@ -212,11 +362,10 @@
             <i>A mesh embedded 3D that satisfies an intrinsic Delaunay criteria</i>
         </div>
         <p>
-            The key is to consider circumcircles intrinsically:
-            importantly, if a mesh satisfies the Delaunay property, then the triangles each circumcircle lies on can be unflattened to a plane.
+            If we consider circumcircles intrinsically, then the triangles each circumcircle lies on can be unflattened to a plane.
             To adapt our <b>in_circle</b> predicate we can therefore "flatten" a non-planar quadrilateral by calculating the diagonal <i>f</i>
             for <math><msub><mtext style="font-weight: bold">in_circle</mtext><ms>planar</ms></msub></math> using <tt>flip_d2</tt> from the previous post.
-            With this, our final predicate becomes:
+            With this, our final predicate becomes
         </p>
         <pre class="equation">
         <math>
@@ -232,122 +381,20 @@
                 <mo>(</mo>
                     <mi>a</mi><mo>,</mo><mi>b</mi><mo>,</mo><mi>c</mi><mo>,</mo><mi>d</mi><mo>,</mo><mi>e</mi>
                 <mo>)</mo>
-            <mo>)</mo>
+            <mo>)</mo><mtext>,</mtext>
         </math>
         </pre>
         <p>
+            where the <math><msub><ms></ms><ms>planar</ms></msub></math> subscript denotes the original planar predicate taking six parameters.
             It is important to note that &mdash; unlike the planar predicate &mdash; the order of the points now does matter:
             the query point must be across from edge <i>c</i>. 
             In the future, it would be nice to see if this can be simplified to a single formula, not a combination of two.
         </p>
-        <h2>A coordinate-free "isvalid" predicate</h2>
         <p>
-            The "isvalid" predicate calculates whether a triangle is flipped or not.
-            Obviously, by this point you might be able to guess that because of the <i>Orientation Problem</i>, we can't know this for a triangle in isolation; 
-            however, we can figure out something related: whether a <i>quadrilateral is folded</i> (along a given edge) or not.
+            To prove I'm not talking out of my ass I made shadertoy showing both predicates <a href="https://www.shadertoy.com/view/WfScDw">here</a>.
+            Check it out!
         </p>
-        <p>
-            Before designing a coordinate-free formula that can calculate this, we need to understand the problem in 3D.
-            Imagine folding a quadrilateral along one of its diagonals such that two triangles are formed, and consider the area of the tetrahedron formed by their hull.
-        </p>
-        <div class="center">
-            <img src="tetrahedron.svg" width="50%" class="invertible"><br>
-            <i>Imagine the above image is in 3D, with quadrilateral a-b-c-d folded along e and edge length f being free.</i>
-        </div>
-        <p>The volume (squared) of the above tetrahedron can be computed using its <a href="https://en.wikipedia.org/wiki/Cayley–Menger_determinant">Cayley-Menger determinant</a>:</p>
-        <math display="block">
-            <mn>288</mn><msup><mi>V</mi><mn>2</mn></msup><mo>=</mo>
-            <ms>det</ms>
-            <mo>[</mo>
-            <mtable>
-                <mtr>
-                    <mtd><mn>0</mn></mtd>
-                    <mtd><msup><mi>a</mi><mn>2</mn></msup></mtd>
-                    <mtd><msup><mi>e</mi><mn>2</mn></msup></mtd>
-                    <mtd><msup><mi>d</mi><mn>2</mn></msup></mtd>
-                    <mtd><mn>1</mn></mtd>
-                </mtr>
-                <mtr>
-                    <mtd><msup><mi>a</mi><mn>2</mn></msup></mtd>
-                    <mtd><mn>0</mn></mtd>
-                    <mtd><msup><mi>b</mi><mn>2</mn></msup></mtd>
-                    <mtd><msup><mi>f</mi><mn>2</mn></msup></mtd>
-                    <mtd><mn>1</mn></mtd>
-                </mtr>
-                <mtr>
-                    <mtd><msup><mi>e</mi><mn>2</mn></msup></mtd>
-                    <mtd><msup><mi>b</mi><mn>2</mn></msup></mtd>
-                    <mtd><mn>0</mn></mtd>
-                    <mtd><msup><mi>c</mi><mn>2</mn></msup></mtd>
-                    <mtd><mn>1</mn></mtd>
-                </mtr>
-                <mtr>
-                    <mtd><msup><mi>d</mi><mn>2</mn></msup></mtd>
-                    <mtd><msup><mi>f</mi><mn>2</mn></msup></mtd>
-                    <mtd><msup><mi>c</mi><mn>2</mn></msup></mtd>
-                    <mtd><mn>0</mn></mtd>
-                    <mtd><mn>1</mn></mtd>
-                </mtr>
-                <mtr>
-                    <mtd><mn>1</mn></mtd>
-                    <mtd><mn>1</mn></mtd>
-                    <mtd><mn>1</mn></mtd>
-                    <mtd><mn>1</mn></mtd>
-                    <mtd><mn>0</mn></mtd>
-                </mtr>
-              </mtable>
-              <mo>]</mo>
-              <ms>.</ms>
-        </math>
-        <p>
-            Imagine fixing the edge lengths <i>a</i>, <i>b</i>, <i>c</i>, <i>d</i>, and <i>e</i>, while letting <i>f</i> be free.
-            Let the quadrilateral be unfolded at first, such that the volume of the tetrahedron is zero.
-            As <i>f</i> decreases, the quadrilateral starts to fold and <i>V</i> increases; <i>V</i> reaches a maximum when the two triangles form a right angle.
-            As <i>f</i> continues to decrease, the quadrilateral folds even more and <i>V</i> starts to decrease as well, until <i>V</i> finally reaches zero.
-            It is interesting to note that the determinant is still continuous at this point (and its initial point): 
-            as <i>f</i> decreases further, the lengths form an invalid tetrahedron and the determinant becomes negative.
-        </p>
-        <div class="center">
-            <img src="folding.svg" width="100%" class="invertible"><br>
-            <i>Imagine the above image is in 3D, with the quadrilateral shown at different stages of folding.</i>
-        </div>
-        <p>
-            I'll define a quadrilateral as "folded" if the area is past its maximum; that is, if the determinant's derivative with respect to <i>f</i> is positive.
-            Futhermore, this derivative has a surprisingly simple formula, giving us our final predicate:
-        </p>
-        <pre class="equation">
-        <math display="block">
-            <mtext style="font-weight: bold">is_valid</mtext>
-            <mo>(</mo>
-                <mi>a</mi><mo>,</mo><mi>b</mi><mo>,</mo><mi>c</mi><mo>,</mo><mi>d</mi><mo>,</mo><mi>e</mi><mo>,</mo><mi>f</mi>
-            <mo>)</mo>
-            <mo>:=</mo>
-            <mn>4</mn><msup><mi>f</mi><mn>2</mn></msup><mi>e</mi>
-            <mo>(</mo>
-                <msup><mi>a</mi><mn>2</mn></msup><mo>+</mo>
-                <msup><mi>b</mi><mn>2</mn></msup><mo>-</mo>
-                <msup><mi>e</mi><mn>2</mn></msup>
-            <mo>)</mo>
-            <mo>-</mo>
-            <mn>2</mn><mi>e</mi>
-            <mo>(</mo>
-                <msup><mi>f</mi><mn>2</mn></msup><mo>+</mo>
-                <msup><mi>a</mi><mn>2</mn></msup><mo>-</mo>
-                <msup><mi>d</mi><mn>2</mn></msup>
-            <mo>)</mo>
-            <mo>(</mo>
-                <msup><mi>f</mi><mn>2</mn></msup><mo>+</mo>
-                <msup><mi>b</mi><mn>2</mn></msup><mo>-</mo>
-                <msup><mi>c</mi><mn>2</mn></msup>
-            <mo>)</mo>
-            <mo><</mo>
-            <mn>0</mn>
-            <ms>.</ms>
-        </math>
-        </pre>
-        <p>
-            It's interesting to note that both of our predicates so far can also be written using Conway's triangle notation.
-        </p>
+        <iframe width="640" height="360" frameborder="0" src="https://www.shadertoy.com/embed/WfScDw?gui=true&t=10&paused=true&muted=false" allowfullscreen></iframe>
         <h2>The triangulation procedure</h2>
         <p>
             The idea behind my triangulation algorithm is to pick a point and grow a triangulation from it, one point at a time.
@@ -370,19 +417,36 @@
 // this function returns the following distances:
 //      __d__
 //   / \    /
-//  a   e  c
+//  a   c  e
 // /__b__\/
+// and f as the long diagonal
 auto quad_d2s(
     const point_id i, const point_id j,
     const point_id k, const point_id l) 
 {
     const double a2 = d2(k, i);
     const double b2 = d2(j, k);
-    const double c2 = d2(l, j);
+    const double c2 = d2(i, j);
     const double d2 = d2(i, l);
-    const double e2 = d2(i, j);
+    const double e2 = d2(j, l);
     const double f2 = d2(k, l);
     return std::make_tuple(a2, b2, c2, d2, e2, f2);
+}
+
+double bary_denorm(
+    const double a2, const double b2, const double c2,
+    const double d2, const double e2, const double f2)
+{
+    return -c2*c2 + a2*c2 + b2*c2 - 2.*c2*f2 - (b2-c2-a2)*d2 - (a2-c2-b2)*e2;
+}
+
+
+bool orient(
+    const point_id i, const point_id j,
+    const point_id k, const point_id l) 
+{
+    const auto [a2, b2, c2, e2, f2] = quad_d2s(i, j, k, l);
+    return bary_denorm(a2, b2, c2, d2, e2, f2) < 0;
 }
 
 bool in_circle(
@@ -392,30 +456,10 @@ bool in_circle(
     const auto [a2, b2, c2, e2, f2_] = quad_d2s(i, j, k, l);
     const double f2 = flip_d2(a2, b2, c2, e2);
 
-    const double S0 = b2 + c2 - a2;
-    const double S1 = c2 + a2 - b2;
-    const double S2 = a2 + b2 - c2;
-
-    const double S3 = e2 + f2 - a2;
-    const double S4 = f2 + d2 - b2;
-    const double S5 = d2 + e2 - c2;
-
-    return S0 * (4.0 * e2 * f2 - S3 * S3) +
-        S1 * (4.0 * f2 * d2 - S4 * S4) + 
-        S2 * (4.0 * d2 * e2 - S5 * S5) < 0.0;
-}
-
-bool valid(
-    const point_id i, const point_id j,
-    const point_id k, const point_id l) 
-{
-    const auto [a2, b2, c2, e2, f2] = quad_d2s(i, j, k, l);
-
-    const double e = std::sqrt(e2);
-    const double S0 = a2 + b2 - e2;
-    const double S1 = f2 + a2 - d2;
-    const double S2 = f2 + b2 - c2;
-    return 4.0 * f2 * e * S0 - 2.0 * e * S1 * S2 < 0.0;
+    const double u = bary_denorm(c2, a2, b2, f2, d2, e2);
+    const double v = bary_denorm(b2, c2, a2, e2, f2, d2);
+    const double w = bary_denorm(a2, b2, c2, d2, e2, f2);
+    return a2*v*w + b2*w*u + c2*u*v < 0;
 }
 
 //     i ____ l
@@ -430,7 +474,7 @@ bool unfolded_along(const hedge_id ij)
     const hedge_id ik = oprev&lt;o&gt;(ij);
     const hedge_id il = onext&lt;o&gt;(ij);
 
-    return is_valid(
+    return orient(
         org(ij), dest(ij), 
         dest(ik), dest(il));
 }
@@ -595,7 +639,7 @@ void stitch_from(const hedge_id base_begin)
             In this post, I introduced an algorithm for generating a Delaunay triangulation given a point set's Euclidean distance matrix.
             Unlike previous works, this algorithm generalizes to 3D point sets with the help of a coordinate-free formulation.
             Previous works in this space typically focus on solving the related problem of finding a 
-            <a href="https://en.wikipedia.org/wiki/Voronoi_diagram">Vornoi diagram</a> and then taking its dual; my method solves the primal problem directly.
+            <a href="https://en.wikipedia.org/wiki/Voronoi_diagram">Voronoi diagram</a> and then taking its dual; my method solves the primal problem directly.
             However, there's still many things left to figure out.
         </p>
         <p>
@@ -697,9 +741,6 @@ void stitch_from(const hedge_id base_begin)
             is the number of edges in the EDM. 
             Some of this can improve with a better implementation of Prims' algorithm, 
             but it still can't be as fast as the G&S algorithm because of its incremental nature.
-            In a later post, I plan to introduce an algorithm with runtime 
-            <math><mi>O</mi><mo>(</mo><mo>|</mo><mi>V</mi><mo>|</mo><ms>log</ms><mo>(</mo><mo>|</mo><mi>V</mi><mo>|</mo><mo>)</mo><mo>)</mo></math>,
-            with a catch &mdash; we need a bit of help from the embedding.
         </p>
     </body>
 </html>

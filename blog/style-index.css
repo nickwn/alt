@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Courier+Prime&family=EB+Garamond:ital,wght@0,500;1,500&family=Vollkorn:ital@0;1&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fira+Sans+Condensed&display=swap');
 
 body {
     margin: 40px auto;
@@ -63,6 +64,20 @@ pre {
 
 .fit {
     max-width: 100%;
+}
+
+.rss {
+    text-align: center;
+    filter: hue-rotate(230deg) saturate(60%);
+    padding: 50px 0px 20px 0px;
+}
+
+.disclamer {
+    font-weight: 400;
+    font-family: 'Fira Sans Condensed', sans-serif;
+    font-variant: small-caps;
+    font-size: 0.7em;
+    padding: 20px 50px 50px 50px
 }
 
 @media (prefers-color-scheme: dark) {
