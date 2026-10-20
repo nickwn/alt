@@ -114,7 +114,7 @@
             <h2>The "Orientation Problem"</h2>
             <p>
                 It's interesting to note that our beautiful equation for the second diagonal of a quadrilateral secretly makes a hidden assumption:
-                it assumes that the quadrilateral is not "folded"; that is, neither the triangles are flipped.
+                it assumes that the quadrilateral is not "folded"; that is, neither triangle is flipped.
             </p>
             <p>
                 We wouldn't have this problem if we were using 2D coordinates, but if we were in 3D it would be harder to define whether a triangle is "flipped".
@@ -127,7 +127,7 @@
         </div>
         <p>
             To compute the geodesic path length, the idea is to incrementally compute the distance from the starting point to 
-            points that are further and futher away until the end point is reached. 
+            points that are further and further away until the end point is reached. 
             At each iteration, we use the previously computed distances to compute the next furthest distance.
         </p>
         <div class="center">
@@ -158,7 +158,7 @@
 }
 
 // an edge defined by its strip-local point indices
-using strip_edge = std::pair&lt;std::size_t, std::size_t&gt;
+using strip_edge = std::pair&lt;std::size_t, std::size_t&gt;;
 
 // intrinsic_mesh is a standard half-edge mesh endowed with 
 // a discrete metric (d2) returning the length squared for 
@@ -172,12 +172,13 @@ void crossings_to_strip_edges(
     point_id j = im.dest(crossings.front());
     std::size_t i_idx = 0;
     std::size_t j_idx = 1;
+    std::size_t next_idx = 2;
 
     strip_edges_out[0] = std::make_pair(i_idx, j_idx);
 
     for (std::size_t idx = 1; idx &lt; crossings.size(); idx++)
     {
-        const hedge_id = crossings[idx];
+        const hedge_id ij = crossings[idx];
         if (im.dest(ij) == i)
         {
             j = im.org(ij);
@@ -190,6 +191,7 @@ void crossings_to_strip_edges(
         }
 
         strip_edges_out[idx] = std::make_pair(i_idx, j_idx);
+        next_idx++;
     }
 }
 
@@ -197,7 +199,7 @@ void strip_d2s(
     const intrinsic_mesh& im,
     std::span&lt;const hedge_id&gt; crossings, 
     std::span&lt;const strip_edge&gt; strip_edges,
-    std::span&lt;double&gt; d2s_out
+    std::span&lt;double&gt; d2s
 ) {
     d2s[0] = im.d2(im.lnext(crossings.front()));
     d2s[1] = im.d2(im.lprev(crossings.front()));
@@ -205,16 +207,16 @@ void strip_d2s(
     for (std::size_t idx = 0; idx &lt; crossings.size(); idx++)
     {
         const auto [i_idx, j_idx] = strip_edges[idx];
-        const hedge_id ij = crossings[idx]
+        const hedge_id ij = crossings[idx];
         const hedge_id ji = im.sym(ij);
 
-        const double d2_ij = d2(ij);
-        const double d2_il = d2(im.lprev(ji));
-        const double d2_jl = d2(im.lnext(ji));
+        const double d2_ij = im.d2(ij);
+        const double d2_il = im.d2(im.lprev(ji));
+        const double d2_jl = im.d2(im.lnext(ji));
         const double d2_ki = d2s[i_idx];
         const double d2_kj = d2s[j_idx];
 
-        d2s[idx + 2] = flip_d2(d2_ki, d2_il, d2_jl, d2_kj, d2_ij);
+        d2s[idx + 2] = flip_d2(d2_ki, d2_kj, d2_jl, d2_il, d2_ij);
     }
 }
 
@@ -231,7 +233,7 @@ double geodesic_d2(
 }
 </code></pre>
         <p>
-            In the code above, <tt>strip_d2s</tt> successively calculates the geodesic lengths, with the last value in <tt>d2s_out</tt> being the length of the complete path.
+            In the code above, <tt>strip_d2s</tt> successively calculates the geodesic lengths, with the last value in <tt>d2s</tt> being the length of the complete path.
         </p>
         <h2>Computing the crossing locations</h2>
         <p>

@@ -3,17 +3,43 @@
     <title>Nick's Web Log</title>
     <link href="http://nickwn.github.io/alt/blog"/>
     <link href="http://nickwn.github.io/alt/blog/atom.xml" rel="self" />
-    <updated>2025-9-7T23:00:00Z</updated>
+    <id>http://nickwn.github.io/alt/blog/</id>
+    <updated>2026-10-19T23:00:00Z</updated>
+    <author><name>Nick</name></author>
+    <entry>
+        <title>Adaptive Exact Predicates in Distance Space</title>
+        <link href="http://nickwn.github.io/alt/blog/exact_predicates.html"/>
+        <id>http://nickwn.github.io/alt/blog/exact_predicates.html</id>
+        <updated>2026-10-19T23:00:00Z</updated>
+    </entry>
     <entry>
         <title>Even More Delaunay Triangulation</title>
         <link href="http://nickwn.github.io/alt/blog/more_delaunay.html"/>
+        <id>http://nickwn.github.io/alt/blog/more_delaunay.html</id>
+        <updated>2025-09-07T23:00:00Z</updated>
+    </entry>
+    <entry>
         <title>Constrained Delaunay Edge Insertion</title>
         <link href="http://nickwn.github.io/alt/blog/edge.html"/>
+        <id>http://nickwn.github.io/alt/blog/edge.html</id>
+        <updated>2024-07-01T23:00:00Z</updated>
+    </entry>
+    <entry>
         <title>Coordinate-free Delaunay Triangulation</title>
         <link href="http://nickwn.github.io/alt/blog/delaunay.html"/>
+        <id>http://nickwn.github.io/alt/blog/delaunay.html</id>
+        <updated>2024-01-01T23:00:00Z</updated>
+    </entry>
+    <entry>
         <title>Geodesic Quantities from Discrete Metric</title>
         <link href="http://nickwn.github.io/alt/blog/geodesic.html"/>
+        <id>http://nickwn.github.io/alt/blog/geodesic.html</id>
+        <updated>2023-12-15T23:00:00Z</updated>
+    </entry>
+    <entry>
         <title>Distance Geometry Processing</title>
         <link href="http://nickwn.github.io/alt/blog/distance.html"/>
+        <id>http://nickwn.github.io/alt/blog/distance.html</id>
+        <updated>2023-12-01T23:00:00Z</updated>
     </entry>
 </feed>

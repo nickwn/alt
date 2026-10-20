@@ -13,7 +13,7 @@
         <h1>Constrained Delaunay Edge Insertion</h1>
         <p>
             In this post, we'll take a short break from distance geometry processing to focus on a new algorithm for adding edges to Delaunay triangulations.
-            Specifically, this algorithm inserts a new boundary edge into a Delaunay triangluation in which the boundary edges have been <a href="https://en.wikipedia.org/wiki/Constrained_Delaunay_triangulation">constrained</a> &mdash; 
+            Specifically, this algorithm inserts a new boundary edge into a Delaunay triangulation in which the boundary edges have been <a href="https://en.wikipedia.org/wiki/Constrained_Delaunay_triangulation">constrained</a> &mdash; 
             that is, a triangulation that satisfies the Delaunay property as long as the triangles' circumcircles are "chopped off" at the boundary of the triangulation.
             We assume each new boundary edge forms at least one new triangle in the triangulation. Boundary edges that become interior lose their constraints.
         </p>
@@ -52,7 +52,7 @@
         </div>
         <p>
             Let <i>basel</i> be the newly inserted edge, and let <i>lcand</i> and <i>rcand</i> be the candidates for the edge forming the next triangle on the left and right side, respectively.
-            We proceed exactly as the G&S algorithm does: we delete <i>lcand</i>/<i>rcand</i> if the destination of the next counterclockwise (resp. clockwise) edge is inside the triangle formed by <i>base</i> and the current <i>lcand</i> (resp. <i>rcand</i>).
+            We proceed exactly as the G&S algorithm does: we delete <i>lcand</i>/<i>rcand</i> if the destination of the next counterclockwise (resp. clockwise) edge is inside the circumcircle of the triangle formed by <i>base</i> and the current <i>lcand</i> (resp. <i>rcand</i>).
             In the above example, we delete <i>lcand</i>:
         </p>
         <div class="center">

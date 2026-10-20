@@ -10,8 +10,8 @@
     <body>
         <h1>Fixed Mistakes and Even More Delaunay Triangulation</h1>
         <p>
-            I made an update to my Delaunay triangulation post recently, as I realized &mdash; rather embarassingly &mdash; that both predicates I derived originally were wrong.
-            Although the original post has been updated (it was still in draft anyways), I wanted to write a quick post to to note that these predicates have been fixed and to explore some further use cases for the predicates that weren't considered in the original post.
+            I made an update to my Delaunay triangulation post recently, as I realized &mdash; rather embarrassingly &mdash; that both predicates I derived originally were wrong.
+            Although the original post has been updated (it was still in draft anyways), I wanted to write a quick post to note that these predicates have been fixed and to explore some further use cases for the predicates that weren't considered in the original post.
         </p>
         <h2>Fixed Mistakes</h2>
         <p>
@@ -46,25 +46,25 @@
                             <mtd><msup><mrow><mo>|</mo><mi style="font-weight: bold">v</mi><mo>|</mo></mrow><mn>2</mn></msup></mtd>
                             <mtd><msub><mi>v</mi><mi>x</mi></msub></mtd>
                             <mtd><msub><mi>v</mi><mi>y</mi></msub></mtd>
-                            <mtd><mo>1</mo></mtd>
+                            <mtd><mn>1</mn></mtd>
                         </mtr>
                         <mtr>
                             <mtd><msup><mrow><mo>|</mo><mi style="font-weight: bold">A</mi><mo>|</mo></mrow><mn>2</mn></msup></mtd>
                             <mtd><msub><mi>A</mi><mi>x</mi></msub></mtd>
                             <mtd><msub><mi>A</mi><mi>y</mi></msub></mtd>
-                            <mtd><mo>1</mo></mtd>
+                            <mtd><mn>1</mn></mtd>
                         </mtr>
                         <mtr>
                             <mtd><msup><mrow><mo>|</mo><mi style="font-weight: bold">B</mi><mo>|</mo></mrow><mn>2</mn></msup></mtd>
                             <mtd><msub><mi>B</mi><mi>x</mi></msub></mtd>
                             <mtd><msub><mi>B</mi><mi>y</mi></msub></mtd>
-                            <mtd><mo>1</mo></mtd>
+                            <mtd><mn>1</mn></mtd>
                         </mtr>
                         <mtr>
                             <mtd><msup><mrow><mo>|</mo><mi style="font-weight: bold">C</mi><mo>|</mo></mrow><mn>2</mn></msup></mtd>
                             <mtd><msub><mi>C</mi><mi>x</mi></msub></mtd>
                             <mtd><msub><mi>C</mi><mi>y</mi></msub></mtd>
-                            <mtd><mo>1</mo></mtd>
+                            <mtd><mn>1</mn></mtd>
                         </mtr>
                     </mtable>
                 <mo>]</mo><mo>&lt;</mo><mn>0</mn><mtext>,</mtext>
@@ -81,25 +81,25 @@
                             <mtd><msub><mi>v</mi><mi>x</mi></msub></mtd>
                             <mtd><msub><mi>v</mi><mi>y</mi></msub></mtd>
                             <mtd><msub><mi>v</mi><mi>z</mi></msub></mtd>
-                            <mtd><mo>1</mo></mtd>
+                            <mtd><mn>1</mn></mtd>
                         </mtr>
                         <mtr>
                             <mtd><msub><mi>A</mi><mi>x</mi></msub></mtd>
                             <mtd><msub><mi>A</mi><mi>y</mi></msub></mtd>
                             <mtd><msub><mi>A</mi><mi>z</mi></msub></mtd>
-                            <mtd><mo>1</mo></mtd>
+                            <mtd><mn>1</mn></mtd>
                         </mtr>
                         <mtr>
                             <mtd><msub><mi>B</mi><mi>x</mi></msub></mtd>
                             <mtd><msub><mi>B</mi><mi>y</mi></msub></mtd>
                             <mtd><msub><mi>B</mi><mi>z</mi></msub></mtd>
-                            <mtd><mo>1</mo></mtd>
+                            <mtd><mn>1</mn></mtd>
                         </mtr>
                         <mtr>
                             <mtd><msub><mi>C</mi><mi>x</mi></msub></mtd>
                             <mtd><msub><mi>C</mi><mi>y</mi></msub></mtd>
                             <mtd><msub><mi>C</mi><mi>z</mi></msub></mtd>
-                            <mtd><mo>1</mo></mtd>
+                            <mtd><mn>1</mn></mtd>
                         </mtr>
                     </mtable>
                 <mo>]</mo><mtext>.</mtext>
@@ -128,7 +128,7 @@
                 Cool, right?
             </p>
             <p>
-                When determing the next point to add to an existing point set hull, quickhull always uses the point furthest from the half-plane of a facet on the hull. 
+                When determining the next point to add to an existing point set hull, quickhull always uses the point furthest from the half-plane of a facet on the hull. 
                 Typically, implementations also re-use the signed tetrahedron volume formula for this purpose.
             </p>
         </div>
@@ -138,13 +138,13 @@
             A neat observation is that after doing cofactor expansion on the determinant, the predicate can be re-written in the form for the equation of a circle in 2D:
         </p>
         <math display="block" style="padding-bottom: 30px;">
-            <mo>-</mo><msup><mrow><mo>|</mo><mi style="font-weight: bold">v</mi><mo>-</mo><mfrac><mi style="font-weight: bold">S</mi><mi>a</mi></mfrac><mo>|</mo></mrow><mn>2</mn></msup><mo>=</mo>
+            <msup><mrow><mo>|</mo><mi style="font-weight: bold">v</mi><mo>-</mo><mfrac><mi style="font-weight: bold">S</mi><mi>a</mi></mfrac><mo>|</mo></mrow><mn>2</mn></msup><mo>=</mo>
             <mfrac><mi>b</mi><mi>a</mi></mfrac><mo>+</mo>
             <mfrac><msup><mrow><mo>|</mo><mi style="font-weight: bold">S</mi><mo>|</mo></mrow><mn>2</mn></msup><msup><mi>a</mi><mn>2</mn></msup></mfrac>
             <mtext>, where</mtext>
         </math>
         <math display="block" style="padding-bottom: 30px;">
-            <msub>><mi>S</mi><mi>x</mi></msub><mo>=</mo>
+            <msub><mi>S</mi><mi>x</mi></msub><mo>=</mo>
             <mfrac><mn>1</mn><mn>2</mn></mfrac><mspace width="5px" />
             <mtext>det</mtext>
             <mo>[</mo>
@@ -152,21 +152,21 @@
                     <mtr>
                         <mtd><msup><mrow><mo>|</mo><mi style="font-weight: bold">A</mi><mo>|</mo></mrow><mn>2</mn></msup></mtd>
                         <mtd><msub><mi>A</mi><mi>y</mi></msub></mtd>
-                        <mtd><mo>1</mo></mtd>
+                        <mtd><mn>1</mn></mtd>
                     </mtr>
                     <mtr>
                         <mtd><msup><mrow><mo>|</mo><mi style="font-weight: bold">B</mi><mo>|</mo></mrow><mn>2</mn></msup></mtd>
                         <mtd><msub><mi>B</mi><mi>y</mi></msub></mtd>
-                        <mtd><mo>1</mo></mtd>
+                        <mtd><mn>1</mn></mtd>
                     </mtr>
                     <mtr>
                         <mtd><msup><mrow><mo>|</mo><mi style="font-weight: bold">C</mi><mo>|</mo></mrow><mn>2</mn></msup></mtd>
                         <mtd><msub><mi>C</mi><mi>y</mi></msub></mtd>
-                        <mtd><mo>1</mo></mtd>
+                        <mtd><mn>1</mn></mtd>
                     </mtr>
                 </mtable>
             <mo>]</mo><mtext>,</mtext><mspace width="5px" />
-            <msub>><mi>S</mi><mi>x</mi></msub><mo>=</mo>
+            <msub><mi>S</mi><mi>y</mi></msub><mo>=</mo>
             <mfrac><mn>1</mn><mn>2</mn></mfrac><mspace width="5px" />
             <mtext>det</mtext>
             <mo>[</mo>
@@ -174,17 +174,17 @@
                     <mtr>
                         <mtd><msub><mi>A</mi><mi>x</mi></msub></mtd>
                         <mtd><msup><mrow><mo>|</mo><mi style="font-weight: bold">A</mi><mo>|</mo></mrow><mn>2</mn></msup></mtd>
-                        <mtd><mo>1</mo></mtd>
+                        <mtd><mn>1</mn></mtd>
                     </mtr>
                     <mtr>
                         <mtd><msub><mi>B</mi><mi>x</mi></msub></mtd>
                         <mtd><msup><mrow><mo>|</mo><mi style="font-weight: bold">B</mi><mo>|</mo></mrow><mn>2</mn></msup></mtd>
-                        <mtd><mo>1</mo></mtd>
+                        <mtd><mn>1</mn></mtd>
                     </mtr>
                     <mtr>
                         <mtd><msub><mi>C</mi><mi>x</mi></msub></mtd>
                         <mtd><msup><mrow><mo>|</mo><mi style="font-weight: bold">C</mi><mo>|</mo></mrow><mn>2</mn></msup></mtd>
-                        <mtd><mo>1</mo></mtd>
+                        <mtd><mn>1</mn></mtd>
                     </mtr>
                 </mtable>
             <mo>]</mo><mtext>,</mtext>
@@ -197,17 +197,17 @@
                     <mtr>
                         <mtd><msub><mi>A</mi><mi>x</mi></msub></mtd>
                         <mtd><msub><mi>A</mi><mi>y</mi></msub></mtd>
-                        <mtd><mo>1</mo></mtd>
+                        <mtd><mn>1</mn></mtd>
                     </mtr>
                     <mtr>
                         <mtd><msub><mi>B</mi><mi>x</mi></msub></mtd>
                         <mtd><msub><mi>B</mi><mi>y</mi></msub></mtd>
-                        <mtd><mo>1</mo></mtd>
+                        <mtd><mn>1</mn></mtd>
                     </mtr>
                     <mtr>
                         <mtd><msub><mi>C</mi><mi>x</mi></msub></mtd>
                         <mtd><msub><mi>C</mi><mi>y</mi></msub></mtd>
-                        <mtd><mo>1</mo></mtd>
+                        <mtd><mn>1</mn></mtd>
                     </mtr>
                 </mtable>
             <mo>]</mo><mtext>, and</mtext><mspace width="5px" />
@@ -257,7 +257,7 @@
 Assume that there are at least d + 2 points in the input set S of points
 
 <b>function</b> Delaunay(S) <b>is</b>
-    T := a an initial triangulation of of d + 2 points in S
+    T := an initial triangulation of d + 2 points in S
     In Circle Set := a map from each facet in T to an empty set of points
 
     <b>for</b> each facet F <b>in</b> T:
@@ -267,7 +267,7 @@ Assume that there are at least d + 2 points in the input set S of points
             <b>if</b> p is in F's circumcircle <b>then</b>:
                 insert p into In Circle Set[F]
     <b>for</b> each facet F <b>in</b> T with a non-empty In Circle Set[F]:
-        Next := the point p in In Circle Set[F] closest to F's circumcircle 
+        Next := the point p in In Circle Set[F] closest to F's circumcenter 
         I := {F}
         <b>for</b> all unvisited neighbors N of facets <b>in</b> I:
             <b>if</b> p is in N's circumcircle <b>then</b>
@@ -278,13 +278,13 @@ Assume that there are at least d + 2 points in the input set S of points
             F' := create a new facet from R and p
             add F' to T
         <b>for</b> facet F' <b>in</b> the new facets
-            <b>for</b> each point q <in>in</in> S assigned to a facet of V in In Circle Set
-                <b>if</b> q is already assigned to a facet in In Circle Set outside of V <b>then</b>
+            <b>for</b> each point q <b>in</b> S assigned to a facet of I in In Circle Set
+                <b>if</b> q is already assigned to a facet in In Circle Set outside of I <b>then</b>
                     <b>continue</b>
                 <b>if</b> q is in (F')'s circumcircle <b>then</b>
                     insert q into In Circle Set[F']
         delete the facets in I from T
     <b>return</b> T
-        </pre></code>
+        </code></pre>
     </body>
 </html>

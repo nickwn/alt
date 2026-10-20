@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Adaptive Exact Predicates in Distance Space</title>
+        <link rel="icon" type="image/png" href="favicon.ico">
+        <link rel="stylesheet" type="text/css" href="styles/code-style.min.css">
+        <link rel="stylesheet" type="text/css" href="style-simple.css">
+        <script src="highlight.min.js"></script>
+        <script>hljs.highlightAll();</script>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body>
+        <h1>Adaptive Exact Predicates in Distance Space</h1>
+        <p>
+            The two predicates from my <a href="delaunay.html">Delaunay triangulation post</a>, <b>orient</b> and <b>in_circle</b>, only ever return a sign.
+            Both are polynomials in the entries of a squared distance matrix, and for nearly degenerate input (almost collinear or almost cocircular points) 
+            the rounding error in evaluating them can be larger than the value itself, so the sign you get back is garbage.
+            In a topological algorithm like <tt>stitch_from</tt> that means an inconsistent mesh, or a loop that never terminates.
+        </p>
+        <p>
+            The standard fix is Shewchuk's 
+            <a href="https://people.eecs.berkeley.edu/~jrs/papers/robustr.pdf">adaptive precision arithmetic</a>:
+            evaluate in plain floating point, bound the error, and only if the bound doesn't certify the sign, redo the computation with more precision.
+            His predicates take point coordinates, however, whereas ours take squared distances, so they don't apply directly.
+            In this post I rederive the two predicates in a form that is cheap to evaluate exactly, then build adaptive versions of them.
+            Throughout, the squared distances are treated as the exact input, so it's the predicates themselves that are made exact, not the process that produced the distances.
+        </p>
+        <h2>Rewriting the predicates</h2>
+        <p>
+            I'll use the labeling from the code in the previous post: the points <i>i</i>, <i>j</i>, <i>k</i>, and <i>l</i> give the squared distances
+            <i>a</i> = |<i>ki</i>|&sup2;, <i>b</i> = |<i>jk</i>|&sup2;, <i>c</i> = |<i>ij</i>|&sup2;, 
+            <i>d</i> = |<i>il</i>|&sup2;, <i>e</i> = |<i>jl</i>|&sup2;, and <i>f</i> = |<i>kl</i>|&sup2;.
+            That is, in this post <i>a</i>, <i>b</i>, ... are the squared quantities themselves, as in the code (<tt>a2</tt>, <tt>b2</tt>, ...).
+        </p>
+        <p>
+            For <b>orient</b> I'll use the form from the dot product derivation, where with <math><mi>P</mi><mo>=</mo><mi>a</mi><mo>+</mo><mi>d</mi><mo>-</mo><mi>f</mi></math>,
+            <math><mi>Q</mi><mo>=</mo><mi>a</mi><mo>+</mo><mi>c</mi><mo>-</mo><mi>b</mi></math>, and <math><mi>R</mi><mo>=</mo><mi>d</mi><mo>+</mo><mi>c</mi><mo>-</mo><mi>e</mi></math>,
+            the point <i>l</i> is across edge <i>ij</i> from <i>k</i> exactly when
+        </p>
+        <math display="block"><mn>2</mn><mi>c</mi><mi>P</mi><mo>-</mo><mi>Q</mi><mi>R</mi><mo>&lt;</mo><mn>0</mn><mtext>.</mtext></math>
+        <p>
+            (<i>P</i>, <i>Q</i>, and <i>R</i> are twice the dot products <math><mover><mrow><mi>i</mi><mi>k</mi></mrow><mo>&rarr;</mo></mover><mo>&middot;</mo><mover><mrow><mi>i</mi><mi>l</mi></mrow><mo>&rarr;</mo></mover></math>,
+            <math><mover><mrow><mi>i</mi><mi>k</mi></mrow><mo>&rarr;</mo></mover><mo>&middot;</mo><mover><mrow><mi>i</mi><mi>j</mi></mrow><mo>&rarr;</mo></mover></math>, and
+            <math><mover><mrow><mi>i</mi><mi>l</mi></mrow><mo>&rarr;</mo></mover><mo>&middot;</mo><mover><mrow><mi>i</mi><mi>j</mi></mrow><mo>&rarr;</mo></mover></math>,
+            so the left hand side is four times the dot product of the two triangles' normals. 
+            This is written directly in the labeling of the code, which is why <tt>a</tt> and <tt>b</tt> aren't swapped like in the <tt>bary_denorm</tt> version.)
+            This is a good form for exact arithmetic: three sums of three terms each, followed by two products and a difference.
+        </p>
+        <p>
+            For <b>in_circle</b> I'll use the square root free form from the previous post. With
+            <math><mi>x</mi><mo>=</mo><mi>d</mi><mo>+</mo><mi>e</mi><mo>-</mo><mi>c</mi></math> and
+            <math><mi>y</mi><mo>=</mo><mi>a</mi><mo>+</mo><mi>b</mi><mo>-</mo><mi>c</mi></math>, 
+            <i>l</i> (which must be across <i>ij</i> from <i>k</i>) is outside the circumcircle of <i>kij</i> if <math><mi>x</mi><mo>&ge;</mo><mn>0</mn></math> and <math><mi>y</mi><mo>&ge;</mo><mn>0</mn></math>,
+            inside it if <math><mi>x</mi><mo>&le;</mo><mn>0</mn></math> and <math><mi>y</mi><mo>&le;</mo><mn>0</mn></math> (and they aren't both zero),
+            and otherwise, when the signs differ, it is inside if <math><mi>L</mi><mo>&gt;</mo><mn>0</mn></math> and <math><mi>x</mi><mo>&lt;</mo><mn>0</mn></math>, or if <math><mi>L</mi><mo>&lt;</mo><mn>0</mn></math> and <math><mi>y</mi><mo>&lt;</mo><mn>0</mn></math>, where
+        </p>
+        <math display="block"><mi>L</mi><mo>=</mo><mi>a</mi><mi>b</mi><msup><mi>x</mi><mn>2</mn></msup><mo>-</mo><mi>d</mi><mi>e</mi><msup><mi>y</mi><mn>2</mn></msup><mtext>.</mtext></math>
+        <p>
+            Here the squares of <i>x</i> and <i>y</i> are the only place where the degree gets high, 
+            and since <i>x</i> and <i>y</i> are exactly computable sums, we can tell the sign cases apart exactly without ever computing <i>L</i>.
+        </p>
+        <h2>Error-free transformations</h2>
+        <p>
+            The key tool is that the rounding error of floating point addition and multiplication is itself a floating point number, and can be computed exactly.
+            For doubles <i>a</i> and <i>b</i>, Knuth's <tt>two_sum</tt> computes <math><mi>x</mi><mo>=</mo><mi>fl</mi><mo>(</mo><mi>a</mi><mo>+</mo><mi>b</mi><mo>)</mo></math> and an <i>y</i> such that
+            <math><mi>x</mi><mo>+</mo><mi>y</mi><mo>=</mo><mi>a</mi><mo>+</mo><mi>b</mi></math> exactly, using six floating point operations and no branches.
+            The product has an equivalent, <tt>two_product</tt>, which with a fused multiply-add is just <math><mi>x</mi><mo>=</mo><mi>fl</mi><mo>(</mo><mi>a</mi><mi>b</mi><mo>)</mo></math> and 
+            <math><mi>y</mi><mo>=</mo><mi>fma</mi><mo>(</mo><mi>a</mi><mo>,</mo><mi>b</mi><mo>,</mo><mo>-</mo><mi>x</mi><mo>)</mo></math>.
+        </p>
+        <p>
+            With these, a real number can be stored as an <i>expansion</i>: the exact sum of a list of non-overlapping doubles, sorted by magnitude.
+            Because the components don't overlap, the largest one dominates all the others combined, so <b>the sign of an expansion is the sign of its last component</b>.
+            Adding a double to an expansion is a chain of <tt>two_sum</tt>s (Shewchuk's <tt>grow_expansion</tt>), 
+            multiplying an expansion by a double is a chain of <tt>two_product</tt>s and <tt>two_sum</tt>s (<tt>scale_expansion</tt>),
+            and the rest follow by repeating those: adding two expansions grows one by each component of the other, and multiplying two expansions scales one by each component of the other and adds up the results.
+            None of these round, so exact answers are just a matter of using enough components.
+            The cost is that the number of components can multiply, which is what makes the exact path slow and why we only want to take it when we have to.
+        </p>
+        <h2>Orient in three stages</h2>
+        <p>
+            <b>Stage A</b> is to just evaluate the formula in floating point,
+        </p>
+        <math display="block"><mover><mi>D</mi><mo>^</mo></mover><mo>=</mo><mi>fl</mi><mo>(</mo><mn>2</mn><mi>c</mi><mover><mi>P</mi><mo>^</mo></mover><mo>-</mo><mover><mi>Q</mi><mo>^</mo></mover><mover><mi>R</mi><mo>^</mo></mover><mo>)</mo><mtext>,</mtext></math>
+        <p>
+            where each hat is a sum of three terms computed left to right. Let <math><mi>&epsilon;</mi><mo>=</mo><msup><mn>2</mn><mn>-53</mn></msup></math> be the unit roundoff.
+            Every input is a squared distance and so non-negative, which makes error analysis pleasant because there is never any cancellation in the <i>absolute values</i> of the terms.
+            For <i>P</i>, a standard calculation gives
+        </p>
+        <math display="block"><mo>|</mo><mover><mi>P</mi><mo>^</mo></mover><mo>-</mo><mi>P</mi><mo>|</mo><mo>&le;</mo><mn>2</mn><mi>&epsilon;</mi><mo>(</mo><mn>1</mn><mo>+</mo><mi>&epsilon;</mi><mo>)</mo><msub><mi>S</mi><mi>P</mi></msub><mtext>,</mtext><mspace width="20px"/><msub><mi>S</mi><mi>P</mi></msub><mo>=</mo><mi>a</mi><mo>+</mo><mi>d</mi><mo>+</mo><mi>f</mi></math>
+        <p>
+            and similarly for <i>Q</i> and <i>R</i> with <math><msub><mi>S</mi><mi>Q</mi></msub><mo>=</mo><mi>a</mi><mo>+</mo><mi>c</mi><mo>+</mo><mi>b</mi></math> and <math><msub><mi>S</mi><mi>R</mi></msub><mo>=</mo><mi>d</mi><mo>+</mo><mi>c</mi><mo>+</mo><mi>e</mi></math>.
+            Propagating these through the product (a rounding of relative size <i>&epsilon;</i> per operation) and the final subtraction, and keeping the first order terms, 
+            the error of the first product is at most about <math><mn>3</mn><mi>&epsilon;</mi><mo>&middot;</mo><mn>2</mn><mi>c</mi><msub><mi>S</mi><mi>P</mi></msub></math>, 
+            that of the second at most about <math><mn>5</mn><mi>&epsilon;</mi><msub><mi>S</mi><mi>Q</mi></msub><msub><mi>S</mi><mi>R</mi></msub></math>, 
+            and the subtraction adds one more <i>&epsilon;</i> times the sum of the two. Collecting terms and rounding up for the second order terms gives
+        </p>
+        <math display="block"><mo>|</mo><mover><mi>D</mi><mo>^</mo></mover><mo>-</mo><mi>D</mi><mo>|</mo><mo>&le;</mo><mn>8</mn><mi>&epsilon;</mi><mo>&middot;</mo><mi>perm</mi><mtext>,</mtext><mspace width="20px"/><mi>perm</mi><mo>=</mo><mn>2</mn><mi>c</mi><msub><mi>S</mi><mi>P</mi></msub><mo>+</mo><msub><mi>S</mi><mi>Q</mi></msub><msub><mi>S</mi><mi>R</mi></msub><mtext>.</mtext></math>
+        <p>
+            (This is called the "permanent" in Shewchuk's work: the formula evaluated with all signs made positive.)
+            If <math><mo>|</mo><mover><mi>D</mi><mo>^</mo></mover><mo>|</mo></math> is bigger than this bound, then <math><mover><mi>D</mi><mo>^</mo></mover></math> has the right sign and we're done.
+            For well separated points this is nearly always the case.
+        </p>
+        <p>
+            <b>Stage B</b> uses the fact that <tt>two_sum</tt> also gives us the error of each sum.
+            Writing <math><mi>P</mi><mo>=</mo><mover><mi>P</mi><mo>^</mo></mover><mo>+</mo><msub><mi>p</mi><mi>t</mi></msub></math> and likewise for <i>Q</i> and <i>R</i>, we have
+        </p>
+        <math display="block"><mi>D</mi><mo>=</mo><mo>(</mo><mn>2</mn><mi>c</mi><mover><mi>P</mi><mo>^</mo></mover><mo>-</mo><mover><mi>Q</mi><mo>^</mo></mover><mover><mi>R</mi><mo>^</mo></mover><mo>)</mo><mo>+</mo><mo>(</mo><mn>2</mn><mi>c</mi><msub><mi>p</mi><mi>t</mi></msub><mo>-</mo><mover><mi>Q</mi><mo>^</mo></mover><msub><mi>r</mi><mi>t</mi></msub><mo>-</mo><mover><mi>R</mi><mo>^</mo></mover><msub><mi>q</mi><mi>t</mi></msub><mo>)</mo><mo>-</mo><msub><mi>q</mi><mi>t</mi></msub><msub><mi>r</mi><mi>t</mi></msub><mtext>.</mtext></math>
+        <p>
+            The first term (the "head") is computed exactly with two <tt>two_product</tt>s and an expansion sum.
+            The second (the "tail") is smaller than the first by a factor of about <i>&epsilon;</i>, so it's fine to compute it in floating point.
+            The last term is smaller by another factor of <i>&epsilon;</i> and is dropped entirely. 
+            Since <math><mo>|</mo><msub><mi>p</mi><mi>t</mi></msub><mo>|</mo><mo>&le;</mo><mn>2</mn><mi>&epsilon;</mi><msub><mi>S</mi><mi>P</mi></msub></math> (and so on), 
+            the dropped term is at most <math><mn>4</mn><msup><mi>&epsilon;</mi><mn>2</mn></msup><msub><mi>S</mi><mi>Q</mi></msub><msub><mi>S</mi><mi>R</mi></msub></math>, and accounting for the rounding errors in the tail we end up with
+        </p>
+        <math display="block"><mo>|</mo><mover><mi>D</mi><mo>^</mo></mover><mo>-</mo><mi>D</mi><mo>|</mo><mo>&le;</mo><mn>3</mn><mi>&epsilon;</mi><mo>|</mo><mover><mi>D</mi><mo>^</mo></mover><mo>|</mo><mo>+</mo><mn>16</mn><msup><mi>&epsilon;</mi><mn>2</mn></msup><mo>&middot;</mo><mi>perm</mi><mtext>,</mtext></math>
+        <p>
+            which is a factor of <i>&epsilon;</i> smaller than the Stage A bound in the case that matters, when <math><mi>D</mi></math> is small relative to <i>perm</i>.
+            The extra term is there to deal with the rounding when estimating the sum of the head's components.
+        </p>
+        <p>
+            <b>Stage C</b> computes everything exactly: <i>P</i>, <i>Q</i>, and <i>R</i> as expansions, then 
+            <math><mn>2</mn><mi>c</mi><mi>P</mi></math> by scaling and <math><mi>Q</mi><mi>R</mi></math> by expansion multiplication, and finally the sign of the difference.
+            Nothing is estimated, so there are no bounds to worry about.
+        </p>
+        <h2>In_circle in the same way</h2>
+        <p>
+            The only work that needs to be exact up front is the signs of <i>x</i> and <i>y</i>. They're sums of three non-negative terms, and so the same stage A analysis gives 
+            <math><mo>|</mo><mover><mi>x</mi><mo>^</mo></mover><mo>-</mo><mi>x</mi><mo>|</mo><mo>&le;</mo><mn>3</mn><mi>&epsilon;</mi><mo>(</mo><mi>d</mi><mo>+</mo><mi>e</mi><mo>+</mo><mi>c</mi><mo>)</mo></math>:
+            if <math><mover><mi>x</mi><mo>^</mo></mover></math> is outside this interval its sign is correct, and if not we fall back to an exact expansion sum of three terms, which is cheap.
+            For random points about two thirds of the calls (65% in my test) end here, since the signs of <i>x</i> and <i>y</i> already settle it.
+        </p>
+        <p>
+            If the signs differ, we need the sign of <i>L</i>.
+            Here the same three stages apply, now with
+        </p>
+        <math display="block"><mi>perm</mi><mo>=</mo><mi>a</mi><mi>b</mi><msup><mi>X</mi><mn>2</mn></msup><mo>+</mo><mi>d</mi><mi>e</mi><msup><mi>Y</mi><mn>2</mn></msup><mtext>,</mtext><mspace width="20px"/><mi>X</mi><mo>=</mo><mi>d</mi><mo>+</mo><mi>e</mi><mo>+</mo><mi>c</mi><mtext>,</mtext><mspace width="10px"/><mi>Y</mi><mo>=</mo><mi>a</mi><mo>+</mo><mi>b</mi><mo>+</mo><mi>c</mi><mtext>.</mtext></math>
+        <p>
+            In stage A, <math><mover><mi>x</mi><mo>^</mo></mover></math> and <math><mover><mi>y</mi><mo>^</mo></mover></math> have errors of about <math><mn>2</mn><mi>&epsilon;</mi><mi>X</mi></math> and <math><mn>2</mn><mi>&epsilon;</mi><mi>Y</mi></math>, 
+            squaring doubles the relative error and adds a rounding, and then the two products and the subtraction add three more roundings in total, which comes to about <math><mn>8</mn><mi>&epsilon;</mi><mo>&middot;</mo><mi>perm</mi></math> after the second order terms are absorbed.
+            I use <math><mn>9</mn><mi>&epsilon;</mi><mo>&middot;</mo><mi>perm</mi></math>.
+            In stage B, we write <math><mi>x</mi><mo>=</mo><mover><mi>x</mi><mo>^</mo></mover><mo>+</mo><msub><mi>x</mi><mi>t</mi></msub></math> and <math><mi>y</mi><mo>=</mo><mover><mi>y</mi><mo>^</mo></mover><mo>+</mo><msub><mi>y</mi><mi>t</mi></msub></math>, so
+        </p>
+        <math display="block"><mi>L</mi><mo>=</mo><mo>(</mo><mi>a</mi><mi>b</mi><msup><mover><mi>x</mi><mo>^</mo></mover><mn>2</mn></msup><mo>-</mo><mi>d</mi><mi>e</mi><msup><mover><mi>y</mi><mo>^</mo></mover><mn>2</mn></msup><mo>)</mo><mo>+</mo><mn>2</mn><mo>(</mo><mi>a</mi><mi>b</mi><mover><mi>x</mi><mo>^</mo></mover><msub><mi>x</mi><mi>t</mi></msub><mo>-</mo><mi>d</mi><mi>e</mi><mover><mi>y</mi><mo>^</mo></mover><msub><mi>y</mi><mi>t</mi></msub><mo>)</mo><mo>+</mo><mo>(</mo><mi>a</mi><mi>b</mi><msubsup><mi>x</mi><mi>t</mi><mn>2</mn></msubsup><mo>-</mo><mi>d</mi><mi>e</mi><msubsup><mi>y</mi><mi>t</mi><mn>2</mn></msubsup><mo>)</mo><mtext>.</mtext></math>
+        <p>
+            We compute the first group exactly, the second in floating point, and drop the third, which is at most about <math><mn>4</mn><msup><mi>&epsilon;</mi><mn>2</mn></msup><mo>&middot;</mo><mi>perm</mi></math>.
+            Adding the roundings of the tail gives the bound <math><mn>3</mn><mi>&epsilon;</mi><mo>|</mo><mover><mi>L</mi><mo>^</mo></mover><mo>|</mo><mo>+</mo><mn>32</mn><msup><mi>&epsilon;</mi><mn>2</mn></msup><mo>&middot;</mo><mi>perm</mi></math>.
+            Stage C is the exact evaluation of <i>L</i> with expansions.
+            Because <i>x</i> and <i>y</i> are expansions of up to three components and <i>L</i> multiplies four numbers of that kind, 
+            the exact expansion can get to a hundred or so components in the worst case, and since I don't want to allocate for this, <tt>Expansion</tt> in the code below is a fixed-capacity array.
+        </p>
+        <p>
+            One caveat I should be honest about: the constants above come from a first-order accounting of the roundings in which I rounded up generously to absorb the <math><msup><mi>&epsilon;</mi><mn>2</mn></msup></math> terms, 
+            not from a careful proof in the style of Shewchuk's paper. 
+            Everything is conservative rather than tight, but if you need a guarantee for your own application, then take the bounds as a derivation sketch and check them.
+        </p>
+        <h2>Code</h2>
+        <p>
+            Here's the whole thing as a single C++ header. 
+            It needs round-to-nearest doubles with no extended precision, so no x87 and compile with <tt>-ffp-contract=off</tt> so the compiler doesn't fuse operations that the error analysis relies on being separate.
+            <tt>std::fma</tt> must also be correctly rounded, which it is if the hardware has one or if the standard library emulates it properly.
+        </p>
+<pre><code class="language-cpp">#pragma once
+#include &lt;cmath&gt;
+
+// Adaptive exact predicates on squared distances.
+// Requires round-to-nearest-even doubles with no extended precision,
+// and no floating point contraction (-ffp-contract=off).
+// Inputs must be finite and non-negative, and products shouldn't over/underflow.
+namespace exact_d2 {
+
+constexpr double eps = 0x1p-53; // unit roundoff
+
+// ---- Error-free transformations ------------------------------------
+
+// x + y == a + b exactly, with x = fl(a + b)
+inline void two_sum(double a, double b, double&amp; x, double&amp; y)
+{
+    x = a + b;
+    const double bv = x - a;
+    const double av = x - bv;
+    y = (a - av) + (b - bv);
+}
+
+// Same as two_sum, but requires |a| &gt;= |b| (or a == 0)
+inline void fast_two_sum(double a, double b, double&amp; x, double&amp; y)
+{
+    x = a + b;
+    y = b - (x - a);
+}
+
+// x + y == a * b exactly, with x = fl(a * b)
+inline void two_product(double a, double b, double&amp; x, double&amp; y)
+{
+    x = a * b;
+    y = std::fma(a, b, -x);
+}
+
+// ---- Expansions -----------------------------------------------------
+
+// A real number stored as the exact sum of non-overlapping doubles,
+// ordered from smallest to largest magnitude.
+struct Expansion
+{
+    static constexpr int cap = 160;
+    double c[cap];
+    int n = 0;
+};
+
+inline Expansion expansion_of(double lo, double hi)
+{
+    Expansion e;
+    e.c[0] = lo;
+    e.c[1] = hi;
+    e.n = 2;
+    return e;
+}
+
+inline Expansion expansion_of(double a)
+{
+    Expansion e;
+    e.c[0] = a;
+    e.n = 1;
+    return e;
+}
+
+inline Expansion negate(Expansion e)
+{
+    for (int i = 0; i &lt; e.n; i++) e.c[i] = -e.c[i];
+    return e;
+}
+
+// e + b
+inline Expansion grow(const Expansion&amp; e, double b)
+{
+    Expansion h;
+    double q = b;
+    for (int i = 0; i &lt; e.n; i++)
+    {
+        double q_new, hh;
+        two_sum(q, e.c[i], q_new, hh);
+        q = q_new;
+        if (hh != 0.) h.c[h.n++] = hh;
+    }
+    if (q != 0. || h.n == 0) h.c[h.n++] = q;
+    return h;
+}
+
+// e + f
+inline Expansion sum(Expansion e, const Expansion&amp; f)
+{
+    for (int i = 0; i &lt; f.n; i++) e = grow(e, f.c[i]);
+    return e;
+}
+
+// e * b
+inline Expansion scale(const Expansion&amp; e, double b)
+{
+    Expansion h;
+    double q, hh;
+    two_product(e.c[0], b, q, hh);
+    if (hh != 0.) h.c[h.n++] = hh;
+    for (int i = 1; i &lt; e.n; i++)
+    {
+        double p1, p0, s;
+        two_product(e.c[i], b, p1, p0);
+        two_sum(q, p0, s, hh);
+        if (hh != 0.) h.c[h.n++] = hh;
+        fast_two_sum(p1, s, q, hh);
+        if (hh != 0.) h.c[h.n++] = hh;
+    }
+    if (q != 0. || h.n == 0) h.c[h.n++] = q;
+    return h;
+}
+
+// e * f
+inline Expansion product(const Expansion&amp; e, const Expansion&amp; f)
+{
+    Expansion h = scale(e, f.c[0]);
+    for (int i = 1; i &lt; f.n; i++) h = sum(h, scale(e, f.c[i]));
+    return h;
+}
+
+// a * b exactly
+inline Expansion product_of(double a, double b)
+{
+    double x, y;
+    two_product(a, b, x, y);
+    return expansion_of(y, x);
+}
+
+// The largest component dominates, so it has the sign of the whole sum.
+inline int sign(const Expansion&amp; e)
+{
+    const double top = e.c[e.n - 1];
+    return (top &gt; 0.) - (top &lt; 0.);
+}
+
+// Approximation of the sum, with relative error O(eps)
+inline double estimate(const Expansion&amp; e)
+{
+    double s = 0.;
+    for (int i = 0; i &lt; e.n; i++) s += e.c[i];
+    return s;
+}
+
+// ---- Shared helpers ---------------------------------------------------
+
+// Returns h = fl(fl(a + b) - c) and sets tail such that 
+// a + b - c == h + tail up to a rounding error in tail.
+inline double sum3(double a, double b, double c, double&amp; tail)
+{
+    double s, e1, h, e2;
+    two_sum(a, b, s, e1);
+    two_sum(s, -c, h, e2);
+    tail = e1 + e2;
+    return h;
+}
+
+inline Expansion sum3_exact(double a, double b, double c)
+{
+    return grow(grow(expansion_of(a), b), -c);
+}
+
+// Exact sign of a + b - c for a, b, c &gt;= 0
+inline int sign_sum3(double a, double b, double c)
+{
+    const double h = (a + b) - c;
+    if (std::fabs(h) &gt; 3. * eps * (a + b + c)) return (h &gt; 0.) - (h &lt; 0.);
+    return sign(sum3_exact(a, b, c));
+}
+
+// A stage result: an estimate of the value and a bound on its error.
+struct Stage { double det, err; };
+
+// =======================================================================
+// orient
+//   2 c2 (a2 + d2 - f2) - (a2 + c2 - b2) (d2 + c2 - e2)
+// is negative when l is across edge ij from k.
+// =======================================================================
+
+inline double orient_perm(double a2, double b2, double c2, double d2, double e2, double f2)
+{
+    return 2. * c2 * (a2 + d2 + f2) + (a2 + c2 + b2) * (d2 + c2 + e2);
+}
+
+inline Stage orient_a(double a2, double b2, double c2, double d2, double e2, double f2)
+{
+    const double P = (a2 + d2) - f2;
+    const double Q = (a2 + c2) - b2;
+    const double R = (d2 + c2) - e2;
+    const double det = (2. * c2) * P - Q * R;
+    return { det, 8. * eps * orient_perm(a2, b2, c2, d2, e2, f2) };
+}
+
+inline Stage orient_b(double a2, double b2, double c2, double d2, double e2, double f2)
+{
+    double tp, tq, tr;
+    const double P = sum3(a2, d2, f2, tp);
+    const double Q = sum3(a2, c2, b2, tq);
+    const double R = sum3(d2, c2, e2, tr);
+
+    // The head is computed exactly, the tails are only estimated.
+    const Expansion head = sum(
+        product_of(2. * c2, P), 
+        negate(product_of(Q, R)));
+    const double tail = (2. * c2) * tp - (Q * tr + R * tq);
+
+    const double det = estimate(head) + tail;
+    const double perm = orient_perm(a2, b2, c2, d2, e2, f2);
+    return { det, 3. * eps * std::fabs(det) + 16. * eps * eps * perm };
+}
+
+inline double orient_exact(double a2, double b2, double c2, double d2, double e2, double f2)
+{
+    const Expansion P = sum3_exact(a2, d2, f2);
+    const Expansion Q = sum3_exact(a2, c2, b2);
+    const Expansion R = sum3_exact(d2, c2, e2);
+    const Expansion det = sum(scale(P, 2. * c2), negate(product(Q, R)));
+    return det.c[det.n - 1];
+}
+
+// Returns a value with the same sign as the exact result.
+// stage (optional) is set to 0, 1, or 2 depending on how much work was needed.
+inline double orient(
+    double a2, double b2, double c2, double d2, double e2, double f2, 
+    int* stage = nullptr)
+{
+    Stage s = orient_a(a2, b2, c2, d2, e2, f2);
+    if (std::fabs(s.det) &gt; s.err) { if (stage) *stage = 0; return s.det; }
+
+    s = orient_b(a2, b2, c2, d2, e2, f2);
+    if (std::fabs(s.det) &gt; s.err) { if (stage) *stage = 1; return s.det; }
+
+    if (stage) *stage = 2;
+    return orient_exact(a2, b2, c2, d2, e2, f2);
+}
+
+// =======================================================================
+// in_circle
+// Let x = d2 + e2 - c2 and y = a2 + b2 - c2. l is inside the circumcircle 
+// of kij (and across ij from k) iff a b x + d e y &lt; 0, which is decided by
+//   x &gt;= 0 and y &gt;= 0         -&gt; false
+//   x &lt;= 0 and y &lt;= 0         -&gt; true
+//   otherwise (x &lt; 0 &lt; y)     -&gt; L &gt; 0
+//   otherwise (y &lt; 0 &lt; x)     -&gt; L &lt; 0
+// where L = a2 b2 x^2 - d2 e2 y^2
+// =======================================================================
+
+inline double in_circle_perm(double a2, double b2, double c2, double d2, double e2)
+{
+    const double X = d2 + e2 + c2;
+    const double Y = a2 + b2 + c2;
+    return a2 * b2 * (X * X) + d2 * e2 * (Y * Y);
+}
+
+inline Stage in_circle_a(double a2, double b2, double c2, double d2, double e2)
+{
+    const double x = (d2 + e2) - c2;
+    const double y = (a2 + b2) - c2;
+    const double det = (a2 * b2) * (x * x) - (d2 * e2) * (y * y);
+    return { det, 9. * eps * in_circle_perm(a2, b2, c2, d2, e2) };
+}
+
+inline Stage in_circle_b(double a2, double b2, double c2, double d2, double e2)
+{
+    double tx, ty;
+    const double x = sum3(d2, e2, c2, tx);
+    const double y = sum3(a2, b2, c2, ty);
+
+    const Expansion head = sum(
+        product(product_of(a2, b2), product_of(x, x)),
+        negate(product(product_of(d2, e2), product_of(y, y))));
+    // First order change due to the tails of x and y
+    const double tail = 2. * ((a2 * b2) * x * tx - (d2 * e2) * y * ty);
+
+    const double det = estimate(head) + tail;
+    const double perm = in_circle_perm(a2, b2, c2, d2, e2);
+    return { det, 3. * eps * std::fabs(det) + 32. * eps * eps * perm };
+}
+
+inline int in_circle_exact(double a2, double b2, double c2, double d2, double e2)
+{
+    const Expansion x = sum3_exact(d2, e2, c2);
+    const Expansion y = sum3_exact(a2, b2, c2);
+    const Expansion det = sum(
+        product(product_of(a2, b2), product(x, x)),
+        negate(product(product_of(d2, e2), product(y, y))));
+    return sign(det);
+}
+
+// Returns whether l is inside the circumcircle of kij, exactly.
+// stage (optional) is set to -1 if only the signs of x and y were needed, 
+// otherwise 0, 1, or 2 depending on how much work was needed.
+inline bool in_circle(
+    double a2, double b2, double c2, double d2, double e2, 
+    int* stage = nullptr)
+{
+    const int sx = sign_sum3(d2, e2, c2);
+    const int sy = sign_sum3(a2, b2, c2);
+
+    if (sx &gt;= 0 &amp;&amp; sy &gt;= 0) { if (stage) *stage = -1; return false; }
+    if (sx &lt;= 0 &amp;&amp; sy &lt;= 0) { if (stage) *stage = -1; return true; }
+
+    int s;
+    Stage st = in_circle_a(a2, b2, c2, d2, e2);
+    if (std::fabs(st.det) &gt; st.err) 
+    {
+        if (stage) *stage = 0;
+        s = (st.det &gt; 0.) - (st.det &lt; 0.);
+    }
+    else 
+    {
+        st = in_circle_b(a2, b2, c2, d2, e2);
+        if (std::fabs(st.det) &gt; st.err)
+        {
+            if (stage) *stage = 1;
+            s = (st.det &gt; 0.) - (st.det &lt; 0.);
+        }
+        else
+        {
+            if (stage) *stage = 2;
+            s = in_circle_exact(a2, b2, c2, d2, e2);
+        }
+    }
+    return (sx &lt; 0) ? s &gt; 0 : s &lt; 0;
+}
+
+} // namespace exact_d2
+</code></pre>
+        <p>
+            To use these in place of the floating point versions in the previous post, the two predicates become
+        </p>
+<pre><code class="language-cpp">bool orient(
+    const point_id i, const point_id j,
+    const point_id k, const point_id l) 
+{
+    const auto [a2, b2, c2, d2, e2, f2] = quad_d2s(i, j, k, l);
+    return exact_d2::orient(a2, b2, c2, d2, e2, f2) &lt; 0.;
+}
+
+bool in_circle(
+    const point_id i, const point_id j,
+    const point_id k, const point_id l) 
+{
+    const auto [a2, b2, c2, d2, e2, f2] = quad_d2s(i, j, k, l);
+    return exact_d2::in_circle(a2, b2, c2, d2, e2);
+}</code></pre>
+        <h2>Limitations</h2>
+        <p>
+            Two assumptions are worth spelling out.
+            First, these predicates are exact with respect to the <i>squared distances you give them</i>. 
+            If you compute the squared distances from floating point coordinates, they are rounded, and the predicate can't tell. 
+            That's the natural notion of exactness in a coordinate-free setting, since the distance matrix is the input, 
+            but it means the mesh you get is Delaunay with respect to the rounded metric, not the one you started with.
+            Second, the error-free transformations fail if products underflow or sums overflow (subnormal inputs, for example, break <tt>two_product</tt>), 
+            so inputs need to stay within a reasonable exponent range, like Shewchuk's.
+            The inputs also shouldn't be negative.
+        </p>
+        <p>
+            Finally, neither predicate checks that the six numbers are the squared distances of a real quadrilateral; 
+            for inputs that violate the triangle inequality the polynomials are still well defined and are computed exactly, but they don't mean anything.
+        </p>
+    </body>
+</html>
