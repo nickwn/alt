@@ -1,21 +1,51 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Geodesic Quantities</title>
+        <title>Distance Geometry Processing and Geodesic Paths</title>
         <link rel="icon" type="image/png" href="favicon.ico">
         <link rel="stylesheet" type="text/css" href="styles/code-style.min.css">
         <link rel="stylesheet" type="text/css" href="style-simple.css">
         <script src="highlight.min.js"></script>
         <script>hljs.highlightAll();</script>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="site.js" defer></script>
     </head>
     <body>
-        <h1>Geodesic Quantities from Discrete Metric</h1>
+        <h1>Distance Geometry Processing and Geodesic&nbsp;Paths</h1>
         <p>
-            As the first post in a short series of posts I plan to write on 
-            <a href="distance.html">distance</a> geometry processing, 
-            I wanted to write up a slightly interesting way to think about geodesic paths on triangle meshes in a completely coordinate-free way.
-            This algorithm is somewhat simple, but hopefully you can still get a taste for how elegant these algorithms can be. 
+            According to Wikipedia, <a href="https://en.wikipedia.org/wiki/Distance_geometry">Distance Geometry</a> is "the branch of mathematics concerned with characterizing and studying sets of points based only on given values of the distances between pairs of points".
+            In this post and the ones that follow, I hope to develop an adjacent theory of <i>Distance Geometry Processing</i>, in which popular geometry processing algorithms are re-formulated in a coordinate-free way, using only the edge lengths &mdash; or 
+            <i>discrete metric</i> &mdash; of the given mesh. If the need for these algorithms seems esoteric to you, then try adapting 
+            <a href="https://www.cs.princeton.edu/courses/archive/fall05/cos528/handouts/A%20Simple%20and%20fast.pdf">this algorithm</a> for 
+            triangulating 2D polygons to work in 3D and come back to this article when you've finished. 
+        </p>
+        <p>
+            If it's been 3 months and you're crying and shivering, your job lost and engagement called off
+            because you've spent every waking hour thinking about this problem, then hopefully you'll be relieved to hear this: 
+            unlike in 2D, not all 3D polygons are triangulatable, and deciding whether a 3D polygon is triangulatable is actually NP-complete!
+            Furthermore, the problem can also be ambiguous since valid triangulations can have significantly different visual properties.
+        </p>
+        <div class="center">
+            <img src="img/geodesic/polys.png" width="80%" class="invertible"><br>
+            <i>Both of the triangulations on the right are valid for the polygon on the left.</i>
+        </div>
+        <p>
+            To narrow the search, it can be useful to optimize for some heuristic to get the most "correct" triangulation; 
+            for example, minimizing the area or maximizing 
+            the minimum triangle angle (to obtain a 
+            <a href="https://en.wikipedia.org/wiki/Constrained_Delaunay_triangulation">constrained Delaunay triangulation</a>).
+        </p>
+        <p>
+            I could get into the joys of polygon triangulation in another day, but hopefully from this example it's easy to understand why 
+            it might be useful for there to be an approach that works independent of the embedding's dimension.
+            I hope to show that a coordinate-free perspective not only nicely generalizes to multiple dimensions (and not to mention, can be easier to implement), 
+            but also possibly reveals some deeper properties of the result. 
+            They can also be useful when adapting geometric algorithms to use metrics that aren't derived directly from the coordinates of an embedding 
+            &mdash; more on this later.
+        </p>
+        <p>
+            To start the series, I'll show a neat little coordinate-free algorithm for calculating the lengths of geodesic paths.
+            It is somewhat simple, but hopefully you can still get a taste for how elegant these algorithms can be.
         </p>
         <h2>Computing geodesic lengths</h2>
         <p>
@@ -30,7 +60,7 @@
             I propose a different way to compute these quantities, using only the edge lengths of the triangles in the strip.
         </p>
         <div class="center">
-            <img src="strip_3d.png" width="50%" style="margin: -20px;"><img src="geodesic_strip.svg" width="50%" class="invertible"><br>
+            <img src="img/geodesic/strip_3d.png" width="50%" style="margin: -20px;"><img src="img/geodesic/geodesic_strip.svg" width="50%" class="invertible"><br>
             <i>A strip of triangles in 3D "laid out" on an arbitrarily chosen 2D grid.</i>
         </div>
         <p>
@@ -39,7 +69,7 @@
             for the distance (squared) between the opposite points of two adjacent triangles using their own edge lengths
             (<math><mi>a</mi><mo>,</mo><mi>b</mi><mo>,</mo><mi>c</mi><mo>,</mo><mi>d</mi></math>) and shared edge length (<math><mi>e</mi></math>):
         </p>
-        <div class="center"><img src="quadrilateral.svg" width="30%" class="invertible"></div>
+        <div class="center"><img src="img/geodesic/quadrilateral.svg" width="30%" class="invertible"></div>
         <pre class="equation">
         <math display="block">
             <mrow>
@@ -131,7 +161,7 @@
             At each iteration, we use the previously computed distances to compute the next furthest distance.
         </p>
         <div class="center">
-            <img src="algorithm_linear.svg" width="80%" class="invertible"><br>
+            <img src="img/geodesic/algorithm_linear.svg" width="80%" class="invertible"><br>
             <i>
                 Each image represents an iteration; in each iteration, we compute the length of the bold dashed diagonal. 
                 Note that the diagonals computed in earlier iterations are used in the computations of later iterations.
@@ -246,7 +276,7 @@ double geodesic_d2(
             More precisely, let <i>A<sub>ikl</sub></i> and <i>A<sub>jkl</sub></i> denote the areas of the triangles <i>ikl</i> and <i>jkl</i> 
             (computed using <a href="https://en.wikipedia.org/wiki/Heron%27s_formula">Heron's formula</a>) in the picture below.
         </p>
-        <div class="center"><img src="edge_crossing.svg" width="40%" class="invertible"></div>
+        <div class="center"><img src="img/geodesic/edge_crossing.svg" width="40%" class="invertible"></div>
         <p>
             Then the exact crossing location for edge <i>ij</i> (the red edge) can be computed as
         </p>

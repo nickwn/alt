@@ -1,45 +1,124 @@
-@import url('https://fonts.googleapis.com/css2?family=Courier+Prime&family=EB+Garamond:ital,wght@0,500;1,500&family=Vollkorn:ital@0;1&display=swap');
+@import url('tokens.css');
+@import url('fonts/fonts.css');
+
+@font-face {
+    font-family: "STIX Two Math";
+    src: url("fonts/STIXTwoMath-Regular.woff2") format("woff2");
+}
 
 body {
-    margin: 40px auto;
+    /* Vollkorn's default figures are old-style, so 1 looks like I and 0 like o. */
+    font-variant-numeric: lining-nums;
+    margin: 0 auto;
     max-width: 650px;
-    line-height: 1.6;
+    line-height: 1.65;
     font-size: 18px;
-    color: #444;
-    padding: 0 20px;
+    color: var(--text);
+    background-color: var(--bg);
+    padding: 56px 22px 90px;
     font-family: 'Vollkorn', serif;
 }
 
+math {
+    font-family: "STIX Two Math", "Latin Modern Math", "Cambria Math", math;
+    font-size: 1.05em;
+}
+
+::selection {
+    background: var(--glow);
+}
+
 h1 {
-    line-height: 1.2;
+    line-height: 1.15;
     font-weight: 400;
+    font-size: 2.3em;
     font-family: 'EB Garamond', serif;
+    color: var(--head);
+    margin: 0 0 1.1em;
+    padding-bottom: .55em;
+    position: relative;
+}
+
+h1::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 64px;
+    height: 4px;
+    border-radius: 4px;
+    background: var(--ink);
 }
 
 h2 {
-    line-height: 1.0;
+    line-height: 1.1;
     font-weight: 400;
+    font-size: 1.65em;
     font-family: 'EB Garamond', serif;
     font-style: italic;
+    color: var(--head);
+    margin: 2.3em 0 .6em;
+}
+
+p {
+    margin: 1.05em 0;
 }
 
 a {
     text-decoration: none;
-    color: #7467c2;
+    color: var(--accent);
+}
+
+a:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 6px;
 }
 
 pre {
-    font-size: 0.9em;
-    background: #e6e4ed;
-    color: #222;
+    font-size: 0.88em;
+    line-height: 1.5;
+    background: var(--code);
+    color: inherit;
+    border: 1px solid var(--line);
     page-break-inside: avoid;
     font-family: monospace;
     max-width: 100%;
     overflow: auto;
-    padding: 1em 1.5em;
+    padding: 1em 1.4em;
     display: block;
     word-wrap: break-word;
+    border-radius: 10px;
+}
+
+tt, code {
+    font-size: 0.86em;
+    background: var(--code);
+    border: 1px solid var(--line);
     border-radius: 5px;
+    padding: 1px 5px;
+}
+
+pre code, pre tt {
+    background: none;
+    border: 0;
+    padding: 0;
+    font-size: 1em;
+}
+
+h1 + p {
+    font-size: 1.07em;
+}
+
+hr {
+    border: 0;
+    border-top: 1px solid var(--line);
+    margin: 2.4em 0;
 }
 
 .equation {
@@ -56,47 +135,214 @@ pre {
     text-align: center;
 }
 
+.center i {
+    color: var(--muted);
+    font-size: .94em;
+}
+
 .digression {
-    background: #e6e4ed;
-    padding: 10px 40px;
-    border-radius: 5px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--accent);
+    padding: 10px 36px;
+    border-radius: 10px;
 }
 
 .digression h2 {
     text-align: center;
 }
 
+.digression > h2:first-child {
+    margin-top: .4em;
+}
+
 .align-right {
     display: block;
 }
 
-.tab { 
-    margin-left: 40px; 
-    margin-right: 40px; 
+.tab {
+    margin-left: 40px;
+    margin-right: 40px;
 }
 
 .fit {
     max-width: 100%;
 }
 
-@media (prefers-color-scheme: dark) {
+@media screen and (max-width: 560px) {
     body {
-        background-color: black;
-        color: #CCC;
+        font-size: 17px;
+        padding-top: 36px;
     }
-    a {
-        color: #84aed4
+
+    .tab {
+        margin-left: 14px;
+        margin-right: 14px;
     }
-    pre {
-        background: #222;
-        color: inherit
-    }
+
     .digression {
-        background: #222;
-        color: inherit
+        padding: 6px 18px;
     }
+}
+
+@media (prefers-color-scheme: dark) {
+    /* Line art drawn in black on a transparent background. Inverting most of the way turns black
+       into a soft off-white; rotating the hue half a turn afterwards puts colours (the red
+       circles in the Delaunay figures) back near their own hue. The page decides this, so the
+       figures always follow the page's mode. */
     .invertible {
-        -webkit-filter: invert(1);
-        filter: invert(1);
+        -webkit-filter: invert(0.87) hue-rotate(180deg);
+        filter: invert(0.87) hue-rotate(180deg);
+    }
+
+    /* Shaded renders can't be inverted; a light backing keeps their dark edges and labels visible.
+       It only shows through transparent pixels, so opaque images are unchanged. */
+    img:not(.invertible) {
+        background: #ebeaf2;
+    }
+}
+
+/* Navigation chrome from site.js */
+.crumbs {
+    font-family: 'Fira Sans Condensed', sans-serif;
+    font-size: .8em;
+    letter-spacing: .02em;
+    margin-bottom: 2.2em;
+}
+
+.crumbs a {
+    color: var(--muted);
+}
+
+.crumbs a:hover {
+    color: var(--accent);
+    text-decoration: none;
+}
+
+.byline {
+    margin: -.9em 0 1.6em;
+    font-style: italic;
+    color: var(--muted);
+}
+
+.toc-inline {
+    margin: 0 0 1.6em;
+    padding: .55em 1.1em;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    font-size: .92em;
+}
+
+.toc-inline summary {
+    cursor: pointer;
+    font-family: 'Fira Sans Condensed', sans-serif;
+    font-variant: small-caps;
+    letter-spacing: .04em;
+    color: var(--muted);
+}
+
+.toc-inline ol, .toc-side ol {
+    margin: .6em 0 .4em;
+    padding-left: 1.3em;
+}
+
+.toc-side {
+    display: none;
+}
+
+.post-nav {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 4em;
+    padding-top: 1.4em;
+    border-top: 1px solid var(--line);
+}
+
+.post-nav a {
+    display: block;
+    max-width: 48%;
+    line-height: 1.3;
+}
+
+.post-nav a span {
+    display: block;
+    font-family: 'Fira Sans Condensed', sans-serif;
+    font-variant: small-caps;
+    letter-spacing: .04em;
+    color: var(--muted);
+}
+
+.post-nav .older {
+    text-align: right;
+    margin-left: auto;
+}
+
+@media screen and (min-width: 1200px) {
+    .toc-inline {
+        display: none;
+    }
+
+    .toc-side {
+        display: block;
+        position: fixed;
+        top: 130px;
+        left: calc(50% - 325px - 250px);
+        width: 210px;
+        font-size: .8em;
+        line-height: 1.35;
+    }
+
+    .toc-title {
+        font-family: 'Fira Sans Condensed', sans-serif;
+        font-variant: small-caps;
+        letter-spacing: .04em;
+        color: var(--muted);
+    }
+
+    .toc-side ol {
+        list-style: none;
+        padding: 0;
+        margin-top: .5em;
+        border-left: 1px solid var(--line);
+    }
+
+    .toc-side li a {
+        display: block;
+        padding: .3em 0 .3em 1em;
+        margin-left: -1px;
+        border-left: 2px solid transparent;
+        color: var(--muted);
+    }
+
+    .toc-side li a:hover {
+        color: var(--accent);
+        text-decoration: none;
+    }
+
+    .toc-side li a.current {
+        color: var(--head);
+        border-left-color: var(--head);
+    }
+}
+
+/* Keep wide formulas and embeds from pushing the page sideways on phones. */
+math[display="block"] {
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+iframe {
+    max-width: 100%;
+}
+
+/* The edge post widens one figure past the 650px column with -70px margins; that only fits when
+   the window has room for it (column + margins + body padding). */
+@media screen and (max-width: 840px) {
+    .center[style*="margin-left: -70px"] {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
     }
 }

@@ -8,6 +8,7 @@
         <script src="highlight.min.js"></script>
         <script>hljs.highlightAll();</script>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="site.js" defer></script>
     </head>
     <body>
         <h1>Coordinate-Free Delaunay Triangulation</h1>
@@ -221,7 +222,7 @@
                 Imagine folding a quadrilateral along one of its diagonals such that two triangles are formed, and consider the area of the tetrahedron formed by their hull.
             </p>
             <div class="center">
-                <img src="tetrahedron.svg" width="50%" class="invertible"><br>
+                <img src="img/delaunay/tetrahedron.svg" width="50%" class="invertible"><br>
                 <i>Imagine the above image is in 3D, with quadrilateral A-C-B-P folded along c (the edge AB) and edge length f (the distance from C to P) being free.</i>
             </div>
             <p>The volume (squared) of the above tetrahedron can be computed using its <a href="https://en.wikipedia.org/wiki/Cayley–Menger_determinant">Cayley-Menger determinant</a>:</p>
@@ -278,7 +279,7 @@
                 as <i>f</i> decreases further, the lengths form an invalid tetrahedron and the determinant becomes negative.
             </p>
             <div class="center">
-                <img src="folding.svg" width="100%" class="invertible"><br>
+                <img src="img/delaunay/folding.svg" width="100%" class="invertible"><br>
                 <i>Imagine the above image is in 3D, with the quadrilateral shown at different stages of folding.</i>
             </div>
             <p>
@@ -359,7 +360,7 @@
                 Since <math><mo>|</mo><msub><mi mathvariant="bold">n</mi><mi>C</mi></msub><mo>|</mo></math> and <math><mo>|</mo><msub><mi mathvariant="bold">n</mi><mi>P</mi></msub><mo>|</mo></math> are twice the areas of their triangles,
                 the predicate is 16 times the product of the two areas, with a sign.
                 Setting <i>P</i> = <i>C</i> (so <i>d</i> = <i>b</i>, <i>e</i> = <i>a</i>, <i>f</i> = 0) gives
-                <math><msup><mrow><mo>|</mo><msub><mi mathvariant="bold">n</mi><mi>C</mi></msub><mo>|</mo></mrow><mn>2</mn></msup><mo>=</mo><mn>4</mn><msup><mi>b</mi><mn>2</mn></msup><msup><mi>c</mi><mn>2</mn></msup><mo>-</mo><msup><mrow><mo>(</mo><msup><mi>b</mi><mn>2</mn></msup><mo>+</mo><msup><mi>c</mi><mn>2</mn></msup><mo>-</mo><msup><mi>a</mi><mn>2</mn></msup><mo>)</mo></mrow><mn>2</mn></msup></math>,
+                <math><mn>4</mn><msup><mrow><mo>|</mo><msub><mi mathvariant="bold">n</mi><mi>C</mi></msub><mo>|</mo></mrow><mn>2</mn></msup><mo>=</mo><mn>4</mn><msup><mi>b</mi><mn>2</mn></msup><msup><mi>c</mi><mn>2</mn></msup><mo>-</mo><msup><mrow><mo>(</mo><msup><mi>b</mi><mn>2</mn></msup><mo>+</mo><msup><mi>c</mi><mn>2</mn></msup><mo>-</mo><msup><mi>a</mi><mn>2</mn></msup><mo>)</mo></mrow><mn>2</mn></msup></math>,
                 which is exactly <math><mtext>det</mtext></math> from before.
                 So <math><mtext>det</mtext></math> is sixteen times the squared area of the triangle, which settles that it is always positive for a non-degenerate triangle.
             </p>
@@ -387,7 +388,7 @@
             in terms of the point's barycentric coordinates:
         </p>
         <div class="center">
-            <img src="simple_bary.svg" width="35%" class="invertible"><br>
+            <img src="img/delaunay/simple_bary.svg" width="35%" class="invertible"><br>
             <i>
                 u, v, and w denote the relative areas of their respective triangles and a, b, and c denote the lengths of their respective edges.
             </i>
@@ -419,7 +420,7 @@
             The law of cosines gives each cosine in terms of the edge lengths,
         </p>
         <div class="center">
-            <img src="incircle_angles.svg" width="40%" class="invertible"><br>
+            <img src="img/delaunay/incircle_angles.svg" width="40%" class="invertible"><br>
             <i>
                 The query point lies inside the circumcircle of the other triangle exactly when &alpha; + &delta; &gt; &pi;.
             </i>
@@ -608,7 +609,7 @@ void stitch_from(const hedge_id base_begin)
     &mdash; when the first fold occurs.
 </p>
 <div class="center">
-    <img src="stitch_from.svg" width="100%" class="invertible"><br>
+    <img src="img/delaunay/stitch_from.svg" width="100%" class="invertible"><br>
     <i>Three iterations of the <tt>stitch_from</tt> loop. Dashed lines represent deleted edges.</i>
 </div>
 <p>

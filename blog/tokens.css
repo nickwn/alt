@@ -1,0 +1,38 @@
+/* Shared colours for every page on the site: home, project pages, blog index and posts. */
+
+:root {
+    color-scheme: light dark;
+    --bg: #f6f5fa;
+    --ink: #2b2a36;
+    --text: #3a3946;
+    --head: #1f1e2b;
+    --muted: #6d6b7d;
+    --card: #ffffff;
+    --panel: #f0eef9;
+    --code: #efedf8;
+    --line: rgba(60, 50, 120, 0.12);
+    --accent: #7467c2;
+    --glow: rgba(116, 103, 194, 0.14);
+    --row: rgba(116, 103, 194, 0.07);
+    --shadow: 0 1px 2px rgba(40, 30, 90, 0.06), 0 6px 18px rgba(40, 30, 90, 0.07);
+    --shadow-hover: 0 2px 4px rgba(40, 30, 90, 0.08), 0 14px 34px rgba(60, 40, 140, 0.16);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #0c0c11;
+        --ink: #d4d3de;
+        --text: #cfcedb;
+        --head: #ecebf5;
+        --muted: #9a98ab;
+        --card: #16161e;
+        --panel: #15151d;
+        --code: #15151d;
+        --line: rgba(200, 210, 255, 0.12);
+        --accent: #84aed4;
+        --glow: rgba(132, 174, 212, 0.16);
+        --row: rgba(132, 174, 212, 0.08);
+        --shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 6px 18px rgba(0, 0, 0, 0.35);
+        --shadow-hover: 0 2px 4px rgba(0, 0, 0, 0.6), 0 14px 34px rgba(0, 0, 0, 0.55);
+    }
+}

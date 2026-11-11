@@ -8,6 +8,7 @@
         <script src="highlight.min.js"></script>
         <script>hljs.highlightAll();</script>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="site.js" defer></script>
     </head>
     <body>
         <h1>Constrained Delaunay Edge Insertion</h1>
@@ -18,8 +19,8 @@
             We assume each new boundary edge forms at least one new triangle in the triangulation. Boundary edges that become interior lose their constraints.
         </p>
         <div class="center" style="margin-left: -70px; margin-right: -70px;">
-            <img src="unconstrained.svg" width="40%" class="invertible">
-            <img src="constrained.svg" width="40%" class="invertible"><br>
+            <img src="img/edge/unconstrained.svg" width="40%" class="invertible">
+            <img src="img/edge/constrained.svg" width="40%" class="invertible"><br>
         </div>
         <div class="center">
             <i>
@@ -40,7 +41,7 @@
             We wish to find the first point touched by the circle as it moves into the interior of the triangulation.
         </p>
         <div class="center">
-            <img src="rising.svg" width="70%" class="invertible">
+            <img src="img/edge/rising.svg" width="70%" class="invertible">
         </div>
         <p>
             Clearly, the triangle formed by this point and the new edge cannot have any other points contained in its (constrained) circumcircle.
@@ -48,7 +49,7 @@
             The recursion stops once we hit an edge that already existed in the original triangulation (and is therefore already Delaunay).
         </p>
         <div class="center">
-            <img src="edge_vars.svg" width="70%" class="invertible">
+            <img src="img/edge/edge_vars.svg" width="70%" class="invertible">
         </div>
         <p>
             Let <i>basel</i> be the newly inserted edge, and let <i>lcand</i> and <i>rcand</i> be the candidates for the edge forming the next triangle on the left and right side, respectively.
@@ -56,13 +57,13 @@
             In the above example, we delete <i>lcand</i>:
         </p>
         <div class="center">
-            <img src="edge_vars2.svg" width="70%" class="invertible">
+            <img src="img/edge/edge_vars2.svg" width="70%" class="invertible">
         </div>
         <p>
             And connect the next edge as usual, repeating the process with a new <i>basel</i>:
         </p>
         <div class="center">
-            <img src="edge_vars3.svg" width="70%" class="invertible">
+            <img src="img/edge/edge_vars3.svg" width="70%" class="invertible">
         </div>
         <p>
             When we reach a point where nothing left needs to be re-triangulated (<i>lcand</i> and <i>rcand</i> form a triangle with <i>basel</i> and both don't need to be deleted), we can terminate the procedure.

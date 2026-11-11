@@ -6,6 +6,7 @@
         <link rel="stylesheet" type="text/css" href="styles/code-style.min.css">
         <link rel="stylesheet" type="text/css" href="style-simple.css">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="site.js" defer></script>
     </head>
     <body>
         <h1>Fixed Mistakes and Even More Delaunay Triangulation</h1>
@@ -121,7 +122,7 @@
                 which is the same as finding the convex hull of the lifted triangulation.
             </p>
             <div class="center">
-                <img src="lifting.png" width="50%">
+                <img src="img/more_delaunay/lifting.png" width="50%">
             </div>
             <p>
                 Using this insight, we can then apply fast convex hull algorithms like <a href="https://en.wikipedia.org/wiki/Quickhull">quickhull</a> (or its <a href="https://dpd.cs.princeton.edu/Papers/BarberDobkinHuhdanpaa.pdf">N-dimensional variant</a>) to find the Delaunay triangulation.
